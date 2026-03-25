@@ -106,7 +106,7 @@ export const apiSpec = {
     },
   },
   paths: {
-    "/whatsapp_logs": {
+    "/message_logs": {
       post: {
         summary: "Insert log entries",
         description:
@@ -131,7 +131,7 @@ export const apiSpec = {
         },
       },
     },
-    "/whatsapp_outbox": {
+    "/message_outbox": {
       post: {
         summary: "Queue outbound messages",
         description: "Insert one or more messages into the outbox for sending. Works for all platforms — the `to_jid` format identifies the target platform.",
@@ -155,7 +155,7 @@ export const apiSpec = {
         },
       },
     },
-    "/whatsapp_session": {
+    "/message_session": {
       patch: {
         summary: "Update session status",
         description: "Update the session row with new status or QR data. Currently used by WhatsApp (Baileys). Other platforms may use this for connection state tracking.",
@@ -183,7 +183,7 @@ export const apiSpec = {
         },
       },
     },
-    "/whatsapp_contacts": {
+    "/message_contacts": {
       post: {
         summary: "Upsert contacts",
         description:

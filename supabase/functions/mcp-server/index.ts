@@ -10,7 +10,6 @@ const app = new Hono();
 
 // ── Auth middleware: validate Authorization: Bearer <api_key> ─────────
 app.use("/*", async (c, next) => {
-  // Allow CORS preflight through
   if (c.req.method === "OPTIONS") return next();
 
   const authHeader = c.req.header("Authorization") || "";
@@ -21,7 +20,6 @@ app.use("/*", async (c, next) => {
     return c.json({ error: "Missing or invalid Authorization Bearer token" }, 401);
   }
 
-  // Hash and look up key
   const encoder = new TextEncoder();
   const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(apiKey));
   const keyHash = Array.from(new Uint8Array(hashBuffer), (b) => b.toString(16).padStart(2, "0")).join("");
@@ -40,7 +38,6 @@ app.use("/*", async (c, next) => {
     return c.json({ error: "API key has been revoked" }, 401);
   }
 
-  // Update last_used_at (fire and forget)
   supabase
     .from("api_keys")
     .update({ last_used_at: new Date().toISOString() })
@@ -67,6 +64,11 @@ mcpServer.tool({
         type: "string",
         description:
           "Filter by source field, e.g. 'baileys:message', 'signal:message', 'telegram:message', 'wechat:message', 'baileys:connection'.",
+      },
+      platform: {
+        type: "string",
+        enum: ["whatsapp", "signal", "telegram", "wechat"],
+        description: "Filter by platform.",
       },
       level: {
         type: "string",
@@ -101,10 +103,11 @@ mcpServer.tool({
   },
   handler: async (params: Record<string, unknown>) => {
     let query = supabase
-      .from("whatsapp_logs")
+      .from("message_logs")
       .select("*")
       .order("created_at", { ascending: false });
 
+    if (params.platform) query = query.eq("platform", params.platform as string);
     if (params.source) query = query.eq("source", params.source as string);
     if (params.level) query = query.eq("level", params.level as string);
     if (params.search) query = query.ilike("message", `%${params.search}%`);
@@ -137,6 +140,11 @@ mcpServer.tool({
         type: "string",
         description: "Search by name, notify (display name), or contact ID.",
       },
+      platform: {
+        type: "string",
+        enum: ["whatsapp", "signal", "telegram", "wechat"],
+        description: "Filter by platform.",
+      },
       id: {
         type: "string",
         description: "Get a specific contact by exact ID (JID, phone, chat_id, openid).",
@@ -147,10 +155,11 @@ mcpServer.tool({
   },
   handler: async (params: Record<string, unknown>) => {
     let query = supabase
-      .from("whatsapp_contacts")
+      .from("message_contacts")
       .select("*")
       .order("updated_at", { ascending: false });
 
+    if (params.platform) query = query.eq("platform", params.platform as string);
     if (params.id) {
       query = query.eq("id", params.id as string);
     } else if (params.search) {
@@ -181,6 +190,11 @@ mcpServer.tool({
         enum: ["pending", "sent", "failed"],
         description: "Filter by delivery status.",
       },
+      platform: {
+        type: "string",
+        enum: ["whatsapp", "signal", "telegram", "wechat"],
+        description: "Filter by platform.",
+      },
       to_jid: {
         type: "string",
         description: "Filter by recipient identifier.",
@@ -191,10 +205,11 @@ mcpServer.tool({
   },
   handler: async (params: Record<string, unknown>) => {
     let query = supabase
-      .from("whatsapp_outbox")
+      .from("message_outbox")
       .select("*")
       .order("created_at", { ascending: false });
 
+    if (params.platform) query = query.eq("platform", params.platform as string);
     if (params.status) query = query.eq("status", params.status as string);
     if (params.to_jid) query = query.eq("to_jid", params.to_jid as string);
 
@@ -232,6 +247,11 @@ mcpServer.tool({
         enum: ["image", "video", "audio", "document"],
         description: "Type of media attachment.",
       },
+      platform: {
+        type: "string",
+        enum: ["whatsapp", "signal", "telegram", "wechat"],
+        description: "Target platform (default: whatsapp).",
+      },
     },
     required: ["to_jid"],
   },
@@ -241,10 +261,11 @@ mcpServer.tool({
       content: params.content || null,
       media_url: params.media_url || null,
       media_type: params.media_type || null,
+      platform: params.platform || "whatsapp",
     };
 
     const { data, error } = await supabase
-      .from("whatsapp_outbox")
+      .from("message_outbox")
       .insert(row)
       .select()
       .single();
@@ -260,17 +281,24 @@ mcpServer.tool({
 mcpServer.tool({
   name: "get_session",
   description:
-    "Get the current connection session status (connected/disconnected/qr_pending). Primarily used for WhatsApp but available for all platforms.",
+    "Get the current connection session status (connected/disconnected/qr_pending). Supports all platforms.",
   inputSchema: {
     type: "object",
-    properties: {},
+    properties: {
+      platform: {
+        type: "string",
+        enum: ["whatsapp", "signal", "telegram", "wechat"],
+        description: "Platform to check (default: whatsapp).",
+      },
+    },
   },
-  handler: async () => {
+  handler: async (params: Record<string, unknown>) => {
+    const platform = (params.platform as string) || "whatsapp";
     const { data, error } = await supabase
-      .from("whatsapp_session")
+      .from("message_session")
       .select("*")
-      .eq("id", 1)
-      .single();
+      .eq("platform", platform)
+      .maybeSingle();
 
     if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }] };
     return { content: [{ type: "text", text: JSON.stringify(data, null, 2) }] };
@@ -295,16 +323,14 @@ mcpServer.tool({
     required: ["remote_jid"],
   },
   handler: async (params: Record<string, unknown>) => {
-    // Get contact info
     const { data: contact } = await supabase
-      .from("whatsapp_contacts")
+      .from("message_contacts")
       .select("*")
       .eq("id", params.remote_jid as string)
       .maybeSingle();
 
-    // Get messages
     let query = supabase
-      .from("whatsapp_logs")
+      .from("message_logs")
       .select("*")
       .eq("metadata->>remote_jid", params.remote_jid as string)
       .order("created_at", { ascending: true });

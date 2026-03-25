@@ -12,9 +12,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface SendPanelProps {
   recentSent: WhatsAppOutbox[];
   contacts: Map<string, WhatsAppContact>;
+  platform?: string;
 }
 
-const SendPanel = ({ recentSent, contacts }: SendPanelProps) => {
+const SendPanel = ({ recentSent, contacts, platform = "whatsapp" }: SendPanelProps) => {
   const [to, setTo] = useState("");
   const [selectedJid, setSelectedJid] = useState("");
   const [content, setContent] = useState("");
@@ -30,7 +31,7 @@ const SendPanel = ({ recentSent, contacts }: SendPanelProps) => {
     const timeout = setTimeout(async () => {
       const db = supabase as any;
       const { data } = await db
-        .from("whatsapp_contacts")
+        .from("message_contacts")
         .select("*")
         .or(`name.ilike.%${to}%,notify.ilike.%${to}%,id.ilike.%${to}%`)
         .limit(8);
@@ -81,12 +82,13 @@ const SendPanel = ({ recentSent, contacts }: SendPanelProps) => {
       }
 
       const db = supabase as any;
-      const { error: insertErr } = await db.from("whatsapp_outbox").insert({
+      const { error: insertErr } = await db.from("message_outbox").insert({
         to_jid: jid,
         content: content.trim() || null,
         media_url: mediaUrl,
         media_type: mediaType,
         status: "pending",
+        platform,
       });
       if (insertErr) throw insertErr;
 
