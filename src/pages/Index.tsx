@@ -87,7 +87,7 @@ const Index = () => {
       });
   }, [activePlatform]);
 
-  const isWhatsApp = activePlatform === "whatsapp";
+  
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -100,7 +100,7 @@ const Index = () => {
 
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
           {/* QR Overlay */}
-          {isWhatsApp && session?.status === "qr_pending" && session.qr_data && (
+          {activePlatform === "whatsapp" && session?.status === "qr_pending" && session.qr_data && (
             <QROverlay qrData={session.qr_data} />
           )}
 
@@ -111,46 +111,40 @@ const Index = () => {
               <ConnectionBar session={session} platform={activePlatform} />
             </div>
             {/* View toggle — only for WhatsApp */}
-            {isWhatsApp && (
-              <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "chat" | "logs")} className="mr-3">
-                <TabsList className="h-8 bg-secondary">
-                  <TabsTrigger value="chat" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    Messages
-                  </TabsTrigger>
-                  <TabsTrigger value="logs" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
-                    <Terminal className="h-3.5 w-3.5" />
-                    Logs
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-            )}
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "chat" | "logs")} className="mr-3">
+              <TabsList className="h-8 bg-secondary">
+                <TabsTrigger value="chat" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Messages
+                </TabsTrigger>
+                <TabsTrigger value="logs" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
+                  <Terminal className="h-3.5 w-3.5" />
+                  Logs
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Main content */}
           <div className="flex flex-1 min-h-0">
-            {isWhatsApp ? (
-              activeView === "chat" ? (
-                <>
-                  <div className="w-[70%] border-r border-border flex flex-col min-h-0">
-                    <ChatView logs={logs} contacts={contactsMap} />
-                  </div>
-                  <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-[70%] border-r border-border flex flex-col min-h-0">
-                    <LogStream logs={logs} />
-                  </div>
-                  <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
-                  </div>
-                </>
-              )
+            {activeView === "chat" ? (
+              <>
+                <div className="w-[70%] border-r border-border flex flex-col min-h-0">
+                  <ChatView logs={logs} contacts={contactsMap} />
+                </div>
+                <div className="w-[30%] flex flex-col min-h-0">
+                  <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
+                </div>
+              </>
             ) : (
-              <PlatformSetup platform={activePlatform} onOpenDocs={() => setActivePanel("api-docs")} />
+              <>
+                <div className="w-[70%] border-r border-border flex flex-col min-h-0">
+                  <LogStream logs={logs} />
+                </div>
+                <div className="w-[30%] flex flex-col min-h-0">
+                  <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
+                </div>
+              </>
             )}
           </div>
         </div>
