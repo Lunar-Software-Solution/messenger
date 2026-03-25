@@ -1,17 +1,14 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { WhatsAppLog, WhatsAppContact } from "@/types/whatsapp";
+import { WhatsAppLog } from "@/types/whatsapp";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText, Image as ImageIcon } from "lucide-react";
-import ChatView from "./ChatView";
+import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText } from "lucide-react";
 
 interface LogStreamProps {
   logs: WhatsAppLog[];
-  contacts: Map<string, WhatsAppContact>;
 }
 
 const levelColors: Record<string, string> = {
@@ -22,8 +19,7 @@ const levelColors: Record<string, string> = {
   fatal: "bg-red-600 font-bold",
 };
 
-const LogStream = ({ logs, contacts }: LogStreamProps) => {
-  const [activeTab, setActiveTab] = useState("chat");
+const LogStream = ({ logs }: LogStreamProps) => {
   const [levelFilter, setLevelFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("");
   const [messagesOnly, setMessagesOnly] = useState(false);
@@ -77,14 +73,8 @@ const LogStream = ({ logs, contacts }: LogStreamProps) => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Tab bar + Filter bar */}
+      {/* Filter bar */}
       <div className="flex items-center gap-3 p-3 border-b border-border flex-wrap sticky top-0 bg-card z-10">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mr-2">
-          <TabsList className="h-8">
-            <TabsTrigger value="chat" className="text-xs px-3 h-6">Chat</TabsTrigger>
-            <TabsTrigger value="logs" className="text-xs px-3 h-6">Logs</TabsTrigger>
-          </TabsList>
-        </Tabs>
         <Select value={levelFilter} onValueChange={setLevelFilter}>
           <SelectTrigger className="w-28 h-8 text-xs bg-secondary border-border">
             <SelectValue />
@@ -114,75 +104,70 @@ const LogStream = ({ logs, contacts }: LogStreamProps) => {
         </label>
       </div>
 
-      {/* Content */}
-      {activeTab === "chat" ? (
-        <ChatView logs={logs} contacts={contacts} />
-      ) : (
-        <>
-          <ScrollArea className="flex-1">
-            <div className="divide-y divide-border">
-              {filtered.map((log) => {
-                const isMsgRow = isMessageRow(log);
-                const expanded = expandedId === log.id;
-                const meta = log.metadata;
-                const fromMe = meta?.from_me;
-                const senderName = meta?.push_name || meta?.remote_jid || "";
+      {/* Log list */}
+      <ScrollArea className="flex-1">
+        <div className="divide-y divide-border">
+          {filtered.map((log) => {
+            const isMsgRow = isMessageRow(log);
+            const expanded = expandedId === log.id;
+            const meta = log.metadata;
+            const fromMe = meta?.from_me;
+            const senderName = meta?.push_name || meta?.remote_jid || "";
 
-                return (
-                  <div
-                    key={log.id}
-                    className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors ${
-                      isMsgRow ? "border-l-4 border-primary bg-primary/5" : ""
-                    }`}
-                    onClick={() => setExpandedId(expanded ? null : log.id)}
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="font-mono text-[11px] text-muted-foreground shrink-0">
-                        {formatTime(log.created_at)}
-                      </span>
-                      <Badge className={`text-[10px] px-1.5 py-0 ${levelColors[log.level] || "bg-zinc-500"}`}>
-                        {log.level}
-                      </Badge>
-                      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
-                        {log.source}
-                      </Badge>
-                      {isMsgRow && (
-                        <>
-                          {fromMe ? (
-                            <ArrowUpRight className="h-3.5 w-3.5 text-primary shrink-0" />
-                          ) : (
-                            <ArrowDownLeft className="h-3.5 w-3.5 text-primary shrink-0" />
-                          )}
-                          <span className="text-xs font-bold text-foreground truncate">{senderName}</span>
-                        </>
+            return (
+              <div
+                key={log.id}
+                className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors ${
+                  isMsgRow ? "border-l-4 border-primary bg-primary/5" : ""
+                }`}
+                onClick={() => setExpandedId(expanded ? null : log.id)}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-mono text-[11px] text-muted-foreground shrink-0">
+                    {formatTime(log.created_at)}
+                  </span>
+                  <Badge className={`text-[10px] px-1.5 py-0 ${levelColors[log.level] || "bg-zinc-500"}`}>
+                    {log.level}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-border text-muted-foreground">
+                    {log.source}
+                  </Badge>
+                  {isMsgRow && (
+                    <>
+                      {fromMe ? (
+                        <ArrowUpRight className="h-3.5 w-3.5 text-primary shrink-0" />
+                      ) : (
+                        <ArrowDownLeft className="h-3.5 w-3.5 text-primary shrink-0" />
                       )}
-                      <span className={`text-xs truncate flex-1 ${isMsgRow ? "text-foreground" : "text-muted-foreground"}`}>
-                        {isMsgRow ? (meta?.body || log.message) : log.message}
-                      </span>
-                      {isMsgRow && renderMediaIndicator(meta)}
-                    </div>
-                    {expanded && (
-                      <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all bg-background p-2 rounded">
-                        {log.message}
-                        {meta && "\n\n" + JSON.stringify(meta, null, 2)}
-                      </pre>
-                    )}
-                  </div>
-                );
-              })}
-              <div ref={bottomRef} />
-            </div>
-          </ScrollArea>
+                      <span className="text-xs font-bold text-foreground truncate">{senderName}</span>
+                    </>
+                  )}
+                  <span className={`text-xs truncate flex-1 ${isMsgRow ? "text-foreground" : "text-muted-foreground"}`}>
+                    {isMsgRow ? (meta?.body || log.message) : log.message}
+                  </span>
+                  {isMsgRow && renderMediaIndicator(meta)}
+                </div>
+                {expanded && (
+                  <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all bg-background p-2 rounded">
+                    {log.message}
+                    {meta && "\n\n" + JSON.stringify(meta, null, 2)}
+                  </pre>
+                )}
+              </div>
+            );
+          })}
+          <div ref={bottomRef} />
+        </div>
+      </ScrollArea>
 
-          {lightboxUrl && (
-            <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 cursor-pointer"
-              onClick={() => setLightboxUrl(null)}
-            >
-              <img src={lightboxUrl} alt="full" className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl" />
-            </div>
-          )}
-        </>
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 cursor-pointer"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <img src={lightboxUrl} alt="full" className="max-h-[90vh] max-w-[90vw] rounded-lg shadow-2xl" />
+        </div>
       )}
     </div>
   );
