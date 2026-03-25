@@ -1,50 +1,31 @@
 
 
-## Plan: Add `profile_pic_url` to contacts and auto-populate from log ingestion
+# Add API Key Authentication to MCP Server
 
-### Problem
-The `whatsapp_contacts` table has no `profile_pic_url` column, and log metadata `profile_pic_url` is never extracted to populate contacts. Avatars can't render.
+## Overview
+Add the same API key authentication used by `api-proxy` to the MCP server, validating `Authorization: Bearer <api_key>` headers against the `api_keys` table. Update the docs to reflect the auth requirement.
 
-### Changes
+## Changes
 
-#### 1. Database migration — add `profile_pic_url` column
-Add a nullable `text` column `profile_pic_url` to `whatsapp_contacts`.
+### 1. `supabase/functions/mcp-server/index.ts`
+- Add an auth middleware in the Hono app that runs before the MCP handler
+- Extract the `Authorization: Bearer <key>` header
+- SHA-256 hash the key and look it up in `api_keys` table (same logic as `api-proxy`)
+- Check the key starts with `mi_`, is not revoked
+- Update `last_used_at` (fire-and-forget)
+- Return 401 JSON response if auth fails
+- Pass through to MCP transport if valid
 
-```sql
-ALTER TABLE public.whatsapp_contacts
-  ADD COLUMN IF NOT EXISTS profile_pic_url text;
-```
+### 2. `src/lib/api-docs-markdown.ts`
+- Add an **Authentication** subsection under MCP Server explaining that requests require a valid API key via `Authorization: Bearer <your-api-key>`
+- Update the Claude Desktop config example to use `mcp-remote` with the `--header "Authorization: Bearer ${API_KEY}"` pattern (matching what the user shared earlier)
+- Update the Cursor/other clients example to include the auth header
+- Update the MCP Inspector example to mention passing the auth header
 
-#### 2. Update edge function `api-proxy/index.ts`
-After the API key validation and before forwarding to PostgREST, add a **side-effect hook** for `POST /whatsapp_logs`:
+### 3. Deploy
+- Deploy the updated `mcp-server` edge function
 
-- Parse the request body (clone it since we still need to forward it)
-- For each log entry where `source === "baileys:message"` and `metadata.remote_jid` exists:
-  - If `metadata.profile_pic_url` is present, upsert into `whatsapp_contacts` setting the `profile_pic_url` (and `notify`/`name` from `push_name` if available)
-- This runs fire-and-forget alongside the normal PostgREST forward
+## Technical Detail
 
-This means the Baileys worker only needs to include `profile_pic_url` in the log metadata — the proxy handles persisting it to contacts automatically.
-
-#### 3. Update API spec (`src/lib/api-spec.ts`)
-- Add `profile_pic_url` to the `ContactUpsert` schema
-- Document `profile_pic_url` in the `LogEntry` metadata description
-
-#### 4. Update TypeScript types
-- Add `profile_pic_url?: string` to `WhatsAppContact` in `src/types/whatsapp.ts`
-- Note: `src/integrations/supabase/types.ts` will auto-update after migration
-
-#### 5. Update frontend components to use the new field
-- `ConversationList.tsx`: Read `contact.profile_pic_url` as avatar source (in addition to existing `meta.profile_pic_url` from logs)
-- `ChatBubble.tsx`: Same — prefer contact-level avatar when log-level is missing
-
-### Files affected
-
-| File | Change |
-|------|--------|
-| Migration SQL | Add `profile_pic_url` column |
-| `supabase/functions/api-proxy/index.ts` | Add contact upsert side-effect on log insert |
-| `src/lib/api-spec.ts` | Add `profile_pic_url` to ContactUpsert schema |
-| `src/types/whatsapp.ts` | Add `profile_pic_url` to `WhatsAppContact` |
-| `src/components/whatsapp/ConversationList.tsx` | Use `contact.profile_pic_url` for avatar |
-| `src/components/whatsapp/ChatBubble.tsx` | Use contact avatar as fallback |
+The auth check reuses the exact same pattern from `api-proxy`: hash with SHA-256, query `api_keys` table by `key_hash`, reject if missing or revoked. The only difference is the header format — `Authorization: Bearer <key>` instead of `X-API-Key: <key>` — to match standard MCP client conventions.
 
