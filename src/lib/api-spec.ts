@@ -2,9 +2,9 @@ export const apiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Messages Ingester API",
-    version: "1.0.0",
+    version: "1.1.0",
     description:
-      "API for ingesting WhatsApp logs, queuing outbound messages, and updating session status. Authenticate all requests with your API key in the `X-API-Key` header. No other credentials are needed.",
+      "Unified API for ingesting messages from WhatsApp, Signal, Telegram, and WeChat. Authenticate all requests with your API key in the `X-API-Key` header. All platforms share the same endpoints — use the `source` field in log entries to identify the originating platform.",
   },
   servers: [
     {
@@ -29,17 +29,43 @@ export const apiSpec = {
         properties: {
           level: { type: "string", enum: ["trace", "debug", "info", "warn", "error", "fatal"], default: "info" },
           message: { type: "string" },
-          source: { type: "string", default: "" },
-          metadata: { type: "object", nullable: true, description: "Arbitrary JSON metadata. For message logs (source=baileys:message), may include `media_url` (a full public URL to the downloaded media file), `media_type`, `from_me`, `push_name`, `remote_jid`, etc." },
+          source: {
+            type: "string",
+            default: "",
+            description: "Identifies the platform and event type. Use platform-specific prefixes for message logs so the system can auto-extract contacts.",
+            enum: [
+              "baileys:message",
+              "signal:message",
+              "telegram:message",
+              "wechat:message",
+              "baileys:connection",
+              "signal:connection",
+              "telegram:connection",
+              "wechat:connection",
+            ],
+          },
+          metadata: {
+            type: "object",
+            nullable: true,
+            description:
+              "Arbitrary JSON metadata. For message logs, include: `remote_jid` (contact/group ID), `push_name`, `profile_pic_url`, `media_url`, `media_type`, `from_me`, `type` (text/image/video/audio/document/sticker/location/contact). Contact data is auto-extracted from message logs.",
+          },
         },
       },
       OutboxMessage: {
         type: "object",
         required: ["to_jid"],
         properties: {
-          to_jid: { type: "string", description: "Recipient JID, e.g. 5511999999999@s.whatsapp.net" },
+          to_jid: {
+            type: "string",
+            description: "Recipient identifier. Format varies by platform — e.g. `5511999999999@s.whatsapp.net` (WhatsApp), `+15551234567` (Signal), `123456789` (Telegram chat_id), `oXYZ...` (WeChat openid).",
+          },
           content: { type: "string", nullable: true },
-          media_url: { type: "string", nullable: true, description: "Supabase Storage path within the `whatsapp-media` bucket (e.g. `outbox/1234_photo.jpg`). The ingester should download from the public URL derived from this path. Not a full URL — use `{SUPABASE_URL}/storage/v1/object/public/whatsapp-media/{media_url}` to resolve." },
+          media_url: {
+            type: "string",
+            nullable: true,
+            description: "Supabase Storage path within the `whatsapp-media` bucket (e.g. `outbox/1234_photo.jpg`). Resolve via `{SUPABASE_URL}/storage/v1/object/public/whatsapp-media/{media_url}`.",
+          },
           media_type: { type: "string", enum: ["image", "video", "audio", "document"], nullable: true },
         },
       },
@@ -54,9 +80,12 @@ export const apiSpec = {
         type: "object",
         required: ["id"],
         properties: {
-          id: { type: "string", description: "WhatsApp JID (primary key), e.g. 5511999999999@s.whatsapp.net" },
+          id: {
+            type: "string",
+            description: "Contact identifier (primary key). Platform-specific — e.g. JID for WhatsApp, phone number for Signal, chat_id for Telegram, openid for WeChat.",
+          },
           name: { type: "string", nullable: true, description: "Contact's address-book name" },
-          notify: { type: "string", nullable: true, description: "Push/notify name set by the contact" },
+          notify: { type: "string", nullable: true, description: "Push/notify/display name set by the contact" },
           verified_name: { type: "string", nullable: true, description: "Business verified name, if any" },
           profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
         },
@@ -67,7 +96,8 @@ export const apiSpec = {
     "/whatsapp_logs": {
       post: {
         summary: "Insert log entries",
-        description: "Append one or more log entries to the WhatsApp logs table.",
+        description:
+          "Append one or more log entries. Used by all platforms — set `source` to identify the platform (e.g. `baileys:message`, `signal:message`, `telegram:message`, `wechat:message`). When `source` is a message source, the proxy auto-extracts contact info from `metadata.remote_jid`, `metadata.push_name`, and `metadata.profile_pic_url`.",
         operationId: "insertLogs",
         requestBody: {
           required: true,
@@ -91,7 +121,7 @@ export const apiSpec = {
     "/whatsapp_outbox": {
       post: {
         summary: "Queue outbound messages",
-        description: "Insert one or more messages into the outbox for sending.",
+        description: "Insert one or more messages into the outbox for sending. Works for all platforms — the `to_jid` format identifies the target platform.",
         operationId: "insertOutbox",
         requestBody: {
           required: true,
@@ -115,7 +145,7 @@ export const apiSpec = {
     "/whatsapp_session": {
       patch: {
         summary: "Update session status",
-        description: "Update the WhatsApp session row with new status or QR data. Use the `id` query parameter to target a specific row (PostgREST filtering).",
+        description: "Update the session row with new status or QR data. Currently used by WhatsApp (Baileys). Other platforms may use this for connection state tracking.",
         operationId: "updateSession",
         parameters: [
           {
@@ -143,7 +173,8 @@ export const apiSpec = {
     "/whatsapp_contacts": {
       post: {
         summary: "Upsert contacts",
-        description: "Insert or update one or more WhatsApp contacts. Use the `Prefer: resolution=merge-duplicates` header for upsert behaviour. The `id` (JID) is the primary key.",
+        description:
+          "Insert or update contacts from any platform. Use the `Prefer: resolution=merge-duplicates` header for upsert behaviour. The `id` is the primary key — use platform-appropriate identifiers. Contacts are also auto-populated from message log metadata.",
         operationId: "upsertContacts",
         parameters: [
           {
