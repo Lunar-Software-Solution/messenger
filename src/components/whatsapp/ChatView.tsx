@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
+import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact, WhatsAppReaction } from "@/types/whatsapp";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatBubble from "./ChatBubble";
 import DateSeparator from "./DateSeparator";
@@ -24,13 +24,32 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
     [logs]
   );
 
+  const { displayMessages, reactionsByJid } = useMemo(() => {
+    const reactions = new Map<string, WhatsAppReaction[]>();
+    const display: WhatsAppLog[] = [];
+
+    allMessages.forEach((msg) => {
+      const meta = (msg.metadata || {}) as WhatsAppMessageMeta;
+      if (meta.type === "reaction") {
+        const jid = meta.remote_jid || "";
+        const list = reactions.get(jid) || [];
+        list.push({ emoji: meta.body || "", push_name: meta.push_name, from_jid: jid });
+        reactions.set(jid, list);
+      } else {
+        display.push(msg);
+      }
+    });
+
+    return { displayMessages: display, reactionsByJid: reactions };
+  }, [allMessages]);
+
   const messages = useMemo(() => {
-    if (!selectedJid) return allMessages;
-    return allMessages.filter((msg) => {
+    if (!selectedJid) return displayMessages;
+    return displayMessages.filter((msg) => {
       const meta = (msg.metadata || {}) as WhatsAppMessageMeta;
       return meta.remote_jid === selectedJid;
     });
-  }, [allMessages, selectedJid]);
+  }, [displayMessages, selectedJid]);
 
   useEffect(() => {
     if (autoScroll && bottomRef.current) {
@@ -62,12 +81,16 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
 
       lastSenderJid = currentJid;
 
+      const metaForReactions = (msg.metadata || {}) as WhatsAppMessageMeta;
+      const jidKey = metaForReactions.remote_jid || "";
+
       elements.push(
         <ChatBubble
           key={msg.id}
           log={msg}
           contacts={contacts}
           showSender={showSender}
+          aggregatedReactions={reactionsByJid.get(jidKey) || []}
           onMediaClick={(url, type) => setLightbox({ url, type })}
           onContactClick={(jid, profilePicUrl, pushName) => setSelectedContact({ jid, profilePicUrl, pushName })}
         />
