@@ -53,7 +53,11 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
 
       const fullPreview = meta.from_me ? `You: ${preview}` : preview;
 
+      const participantName = meta.push_name || "";
+
       if (!existing || msg.created_at > existing.lastTimestamp) {
+        const participants = existing?.participants || new Set<string>();
+        if (participantName) participants.add(participantName);
         map.set(jid, {
           jid,
           name: existing?.name || name,
@@ -62,9 +66,11 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
           lastTimestamp: msg.created_at,
           messageCount: (existing?.messageCount || 0) + 1,
           isGroup,
+          participants,
         });
       } else {
         existing.messageCount += 1;
+        if (participantName) existing.participants.add(participantName);
         if (meta.profile_pic_url && !existing.profilePic) {
           existing.profilePic = meta.profile_pic_url;
         }
