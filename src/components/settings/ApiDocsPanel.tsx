@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { apiSpec } from "@/lib/api-spec";
 import { generateMarkdown } from "@/lib/api-docs-markdown";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -19,6 +19,35 @@ const methodColors: Record<string, string> = {
   put: "bg-blue-600",
   get: "bg-blue-500",
   delete: "bg-red-600",
+};
+
+const mcpUrl = apiSpec.servers[0].url.replace("/api-proxy", "/mcp-server");
+
+const mcpTools = [
+  { name: "query_logs", desc: "Search/filter message logs by source, level, date range, contact" },
+  { name: "query_contacts", desc: "List or search contacts across all platforms" },
+  { name: "query_outbox", desc: "Check outbound message delivery status" },
+  { name: "send_message", desc: "Queue an outbound message for delivery" },
+  { name: "get_session", desc: "Check the current connection session status" },
+  { name: "get_conversation", desc: "Get full chat history with a specific contact" },
+];
+
+const claudeConfig = {
+  mcpServers: {
+    "messages-ingester": {
+      command: "npx",
+      args: ["-y", "mcp-remote@latest", mcpUrl, "--header", "Authorization: Bearer ${MCP_API_KEY}"],
+      env: { MCP_API_KEY: "mi_your_api_key_here" },
+    },
+  },
+};
+
+const cursorConfig = {
+  "messages-ingester": {
+    command: "npx",
+    args: ["-y", "mcp-remote@latest", mcpUrl, "--header", "Authorization: Bearer ${MCP_API_KEY}"],
+    env: { MCP_API_KEY: "mi_your_api_key_here" },
+  },
 };
 
 export function ApiDocsPanel({ open, onClose }: ApiDocsPanelProps) {
@@ -85,6 +114,84 @@ export function ApiDocsPanel({ open, onClose }: ApiDocsPanelProps) {
 
         <ScrollArea className="flex-1 min-h-0">
           <div className="space-y-2 pr-2">
+
+            {/* MCP Server Section */}
+            <div className="border border-border rounded-lg p-3 mb-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">MCP Server (Model Context Protocol)</h3>
+              <p className="text-xs text-muted-foreground">
+                An MCP server is available for AI agents and tools to query logs, contacts, and send messages programmatically.
+              </p>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Endpoint:</strong>{" "}
+                <code className="bg-secondary px-1 rounded">{mcpUrl}</code>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Auth:</strong>{" "}
+                <code className="bg-secondary px-1 rounded">Authorization: Bearer mi_your_api_key_here</code>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Transport:</strong> Streamable HTTP
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-1">Available Tools</p>
+                <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+                  {mcpTools.map((t) => (
+                    <React.Fragment key={t.name}>
+                      <code className="text-foreground font-mono">{t.name}</code>
+                      <span className="text-muted-foreground">{t.desc}</span>
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-foreground mb-1">Connection Configs</p>
+
+                <Collapsible open={expandedPaths.has("mcp-claude")} onOpenChange={() => togglePath("mcp-claude")}>
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 p-2 rounded-md bg-secondary hover:bg-accent transition-colors cursor-pointer text-xs">
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expandedPaths.has("mcp-claude") ? "rotate-90" : ""}`} />
+                    Claude Desktop
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <pre className="bg-secondary p-2 rounded overflow-x-auto text-[11px] font-mono text-foreground mt-1">
+                      {JSON.stringify(claudeConfig, null, 2)}
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Collapsible open={expandedPaths.has("mcp-cursor")} onOpenChange={() => togglePath("mcp-cursor")}>
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 p-2 rounded-md bg-secondary hover:bg-accent transition-colors cursor-pointer text-xs">
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expandedPaths.has("mcp-cursor") ? "rotate-90" : ""}`} />
+                    Cursor / Other MCP Clients
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <pre className="bg-secondary p-2 rounded overflow-x-auto text-[11px] font-mono text-foreground mt-1">
+                      {JSON.stringify(cursorConfig, null, 2)}
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Collapsible open={expandedPaths.has("mcp-inspector")} onOpenChange={() => togglePath("mcp-inspector")}>
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 p-2 rounded-md bg-secondary hover:bg-accent transition-colors cursor-pointer text-xs">
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expandedPaths.has("mcp-inspector") ? "rotate-90" : ""}`} />
+                    MCP Inspector
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="bg-secondary p-2 rounded text-[11px] font-mono text-foreground mt-1 space-y-1">
+                      <p className="text-muted-foreground font-sans">Run the inspector, select <strong>Streamable HTTP</strong>, enter the URL, and add the auth header:</p>
+                      <pre className="overflow-x-auto">npx @modelcontextprotocol/inspector</pre>
+                      <pre className="overflow-x-auto">Authorization: Bearer mi_your_api_key_here</pre>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </div>
+
+            {/* REST Endpoints */}
             {Object.entries(apiSpec.paths).map(([path, methods]) =>
               Object.entries(methods as Record<string, any>).map(([method, op]) => {
                 const key = `${method}-${path}`;
