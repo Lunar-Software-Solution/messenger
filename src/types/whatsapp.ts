@@ -1,3 +1,12 @@
+export type MessagingPlatform = 'whatsapp' | 'signal' | 'wechat' | 'telegram';
+
+export const PLATFORM_LABELS: Record<MessagingPlatform, string> = {
+  whatsapp: 'WhatsApp',
+  signal: 'Signal',
+  wechat: 'WeChat',
+  telegram: 'Telegram',
+};
+
 export interface WhatsAppSession {
   id: number;
   status: 'disconnected' | 'qr_pending' | 'connected';
