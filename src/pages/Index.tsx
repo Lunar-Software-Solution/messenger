@@ -100,8 +100,8 @@ const Index = () => {
 
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
           {/* QR Overlay */}
-          {activePlatform === "whatsapp" && session?.status === "qr_pending" && session.qr_data && (
-            <QROverlay qrData={session.qr_data} />
+          {session?.status === "qr_pending" && session.qr_data && (
+            <QROverlay qrData={session.qr_data} platform={activePlatform} />
           )}
 
           {/* Top bar */}

@@ -23,12 +23,14 @@ interface ConnectionBarProps {
 }
 
 const ConnectionBar = ({ session, platform }: ConnectionBarProps) => {
-  const isWhatsApp = platform === 'whatsapp';
-  const status = isWhatsApp ? (session?.status ?? 'disconnected') : 'disconnected';
+  const status = session?.status ?? 'disconnected';
   const isConnected = status === 'connected';
+  const isQrPending = status === 'qr_pending';
   const { user, signOut } = useAuth();
   const PlatformIcon = PLATFORM_ICONS[platform];
   const platformColor = PLATFORM_COLOR_CLASS[platform];
+
+  const statusLabel = isConnected ? 'Connected' : isQrPending ? 'Awaiting scan…' : 'Disconnected';
 
   return (
     <div className="flex items-center gap-3 px-5 py-3 bg-card border-b border-border">
@@ -38,11 +40,13 @@ const ConnectionBar = ({ session, platform }: ConnectionBarProps) => {
           className={`h-3 w-3 rounded-full ${
             isConnected
               ? 'bg-platform-whatsapp animate-pulse'
+              : isQrPending
+              ? 'bg-yellow-400 animate-pulse'
               : 'bg-muted-foreground'
           }`}
         />
         <span className="text-sm font-medium text-foreground">
-          {PLATFORM_LABELS[platform]} — {isWhatsApp ? (isConnected ? 'Connected' : 'Disconnected') : 'Not configured'}
+          {PLATFORM_LABELS[platform]} — {statusLabel}
         </span>
       </div>
       <span className="text-xs text-muted-foreground font-mono mr-2">
