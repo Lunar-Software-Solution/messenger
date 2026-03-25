@@ -4,12 +4,12 @@ export const apiSpec = {
     title: "Messages Ingester API",
     version: "1.0.0",
     description:
-      "API for ingesting WhatsApp logs, queuing outbound messages, and updating session status. Authenticate all requests with an API key in the `X-API-Key` header.",
+      "API for ingesting WhatsApp logs, queuing outbound messages, and updating session status. Authenticate all requests with your API key in the `X-API-Key` header. No other credentials are needed.",
   },
   servers: [
     {
-      url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/rest/v1",
-      description: "Supabase REST (PostgREST)",
+      url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/functions/v1/api-proxy",
+      description: "Messages Ingester API Proxy",
     },
   ],
   security: [{ ApiKeyAuth: [] }],
@@ -19,7 +19,7 @@ export const apiSpec = {
         type: "apiKey",
         in: "header",
         name: "X-API-Key",
-        description: "API key generated from the Messages Ingester dashboard.",
+        description: "API key generated from the Messages Ingester dashboard. This is the only credential needed.",
       },
     },
     schemas: {
@@ -142,7 +142,7 @@ export const apiSpec = {
     "/whatsapp_contacts": {
       post: {
         summary: "Upsert contacts",
-        description: "Insert or update one or more WhatsApp contacts. Use the `Prefer: resolution=merge-duplicates` header for upsert behaviour (PostgREST). The `id` (JID) is the primary key.",
+        description: "Insert or update one or more WhatsApp contacts. Use the `Prefer: resolution=merge-duplicates` header for upsert behaviour. The `id` (JID) is the primary key.",
         operationId: "upsertContacts",
         parameters: [
           {

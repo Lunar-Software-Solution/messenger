@@ -18,9 +18,18 @@ export function generateMarkdown(): string {
 
   // Auth
   lines.push("## Authentication\n");
-  lines.push("All requests require an `X-API-Key` header with a valid API key generated from the Messages Ingester dashboard.\n");
+  lines.push("All requests require a single `X-API-Key` header with a valid API key generated from the Messages Ingester dashboard. **No other credentials are needed.**\n");
   lines.push("```");
   lines.push("X-API-Key: mi_your_api_key_here");
+  lines.push("```\n");
+
+  // Example
+  lines.push("## Quick Example\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[0].url}/whatsapp_logs" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -H "Content-Type: application/json" \\`);
+  lines.push(`  -d '{"level":"info","message":"Hello from the API","source":"my-ingester"}'`);
   lines.push("```\n");
 
   // Endpoints
@@ -31,6 +40,14 @@ export function generateMarkdown(): string {
       lines.push(`**${op.summary}**\n`);
       lines.push(op.description);
       lines.push("");
+
+      if (op.parameters) {
+        lines.push("**Parameters:**\n");
+        for (const p of op.parameters) {
+          lines.push(`- \`${p.name}\` (${p.in}): ${p.description}`);
+        }
+        lines.push("");
+      }
 
       if (op.requestBody) {
         const schema = op.requestBody.content["application/json"]?.schema;
