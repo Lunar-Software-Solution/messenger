@@ -10,6 +10,7 @@ interface ChatBubbleProps {
   contacts: Map<string, WhatsAppContact>;
   showSender: boolean;
   onMediaClick: (url: string, type: "image" | "video") => void;
+  onContactClick: (jid: string, profilePicUrl?: string, pushName?: string) => void;
 }
 
 const senderColors = [
@@ -38,7 +39,7 @@ function linkify(text: string) {
   );
 }
 
-const ChatBubble = ({ log, contacts, showSender, onMediaClick }: ChatBubbleProps) => {
+const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }: ChatBubbleProps) => {
   const meta = (log.metadata || {}) as WhatsAppMessageMeta;
   const fromMe = meta.from_me ?? false;
   const isGroup = meta.remote_jid?.endsWith("@g.us") ?? false;
@@ -175,8 +176,8 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick }: ChatBubbleProps
     <div className={`flex ${fromMe ? "justify-end" : "justify-start"} px-3 py-0.5 group`}>
       {/* Avatar for incoming */}
       {!fromMe && showSender && (
-        <div className="mr-2 mt-auto mb-1 shrink-0">
-          <Avatar className="h-7 w-7">
+        <div className="mr-2 mt-auto mb-1 shrink-0 cursor-pointer" onClick={() => onContactClick(senderJid, profilePic, senderName)}>
+          <Avatar className="h-7 w-7 hover:ring-2 hover:ring-primary/50 transition-all">
             {profilePic ? <AvatarImage src={profilePic} /> : null}
             <AvatarFallback className="text-[10px] bg-secondary">{initials}</AvatarFallback>
           </Avatar>
@@ -198,10 +199,12 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick }: ChatBubbleProps
 
         {/* Sender name for groups */}
         {!fromMe && showSender && isGroup && (
-          <p className={`text-[11px] font-semibold mb-0.5 ${getSenderColor(senderJid)}`}>{senderName}</p>
+          <p className={`text-[11px] font-semibold mb-0.5 cursor-pointer hover:underline ${getSenderColor(senderJid)}`}
+            onClick={() => onContactClick(senderJid, profilePic, senderName)}>{senderName}</p>
         )}
         {!fromMe && showSender && !isGroup && (
-          <p className="text-[11px] font-semibold mb-0.5 text-primary">{senderName}</p>
+          <p className="text-[11px] font-semibold mb-0.5 text-primary cursor-pointer hover:underline"
+            onClick={() => onContactClick(senderJid, profilePic, senderName)}>{senderName}</p>
         )}
 
         {/* Quoted */}

@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatBubble from "./ChatBubble";
 import DateSeparator from "./DateSeparator";
 import MessageLightbox from "./MessageLightbox";
+import ContactDetailsPanel from "./ContactDetailsPanel";
 
 interface ChatViewProps {
   logs: WhatsAppLog[];
@@ -13,6 +14,7 @@ interface ChatViewProps {
 const ChatView = ({ logs, contacts }: ChatViewProps) => {
   const [autoScroll, setAutoScroll] = useState(true);
   const [lightbox, setLightbox] = useState<{ url: string; type: "image" | "video" } | null>(null);
+  const [selectedContact, setSelectedContact] = useState<{ jid: string; profilePicUrl?: string; pushName?: string } | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const messages = useMemo(
@@ -26,7 +28,6 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
     }
   }, [messages.length, autoScroll]);
 
-  // Group messages by date and determine when to show sender
   const renderMessages = () => {
     const elements: React.ReactNode[] = [];
     let lastDate = "";
@@ -58,6 +59,7 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
           contacts={contacts}
           showSender={showSender}
           onMediaClick={(url, type) => setLightbox({ url, type })}
+          onContactClick={(jid, profilePicUrl, pushName) => setSelectedContact({ jid, profilePicUrl, pushName })}
         />
       );
     });
@@ -87,6 +89,16 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
           onClose={() => setLightbox(null)}
         />
       )}
+
+      <ContactDetailsPanel
+        open={!!selectedContact}
+        jid={selectedContact?.jid || null}
+        contact={selectedContact ? contacts.get(selectedContact.jid) || null : null}
+        logs={logs}
+        profilePicUrl={selectedContact?.profilePicUrl}
+        pushName={selectedContact?.pushName}
+        onClose={() => setSelectedContact(null)}
+      />
     </div>
   );
 };
