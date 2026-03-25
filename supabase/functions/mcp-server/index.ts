@@ -1,12 +1,54 @@
 import { Hono } from "https://deno.land/x/hono@v4.3.11/mod.ts";
 import { McpServer, StreamableHttpTransport } from "npm:mcp-lite@^0.10.0";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "npm:@supabase/supabase-js@2.49.1";
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 const app = new Hono();
+
+// ── Auth middleware: validate Authorization: Bearer <api_key> ─────────
+app.use("/*", async (c, next) => {
+  // Allow CORS preflight through
+  if (c.req.method === "OPTIONS") return next();
+
+  const authHeader = c.req.header("Authorization") || "";
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const apiKey = match?.[1];
+
+  if (!apiKey || !apiKey.startsWith("mi_")) {
+    return c.json({ error: "Missing or invalid Authorization Bearer token" }, 401);
+  }
+
+  // Hash and look up key
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(apiKey));
+  const keyHash = Array.from(new Uint8Array(hashBuffer), (b) => b.toString(16).padStart(2, "0")).join("");
+
+  const { data: keyRow, error: keyError } = await supabase
+    .from("api_keys")
+    .select("id, user_id, revoked_at")
+    .eq("key_hash", keyHash)
+    .maybeSingle();
+
+  if (keyError || !keyRow) {
+    return c.json({ error: "Invalid API key" }, 401);
+  }
+
+  if (keyRow.revoked_at) {
+    return c.json({ error: "API key has been revoked" }, 401);
+  }
+
+  // Update last_used_at (fire and forget)
+  supabase
+    .from("api_keys")
+    .update({ last_used_at: new Date().toISOString() })
+    .eq("id", keyRow.id)
+    .then();
+
+  await next();
+});
 
 const mcpServer = new McpServer({
   name: "messages-ingester",

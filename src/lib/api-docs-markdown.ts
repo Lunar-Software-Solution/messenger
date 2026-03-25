@@ -42,6 +42,11 @@ export function generateMarkdown(): string {
   lines.push("```");
   lines.push(`${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`);
   lines.push("```\n");
+  lines.push("### Authentication\n");
+  lines.push("The MCP server requires a valid API key passed via the `Authorization: Bearer` header. Use the same API keys generated from the dashboard.\n");
+  lines.push("```");
+  lines.push("Authorization: Bearer mi_your_api_key_here");
+  lines.push("```\n");
   lines.push("### Transport\n");
   lines.push("The server uses the **Streamable HTTP** transport. Connect using any MCP-compatible client.\n");
   lines.push("### Available Tools\n");
@@ -54,31 +59,51 @@ export function generateMarkdown(): string {
   lines.push("| `get_session` | Check the current connection session status |");
   lines.push("| `get_conversation` | Get full chat history with a specific contact |");
   lines.push("");
+  const mcpUrl = spec.servers[0].url.replace('/api-proxy', '/mcp-server');
   lines.push("### Connecting with Claude Desktop\n");
   lines.push("Add this to your `claude_desktop_config.json`:\n");
   lines.push("```json");
   lines.push(JSON.stringify({
     mcpServers: {
       "messages-ingester": {
-        transport: "streamable-http",
-        url: `${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`
+        command: "npx",
+        args: [
+          "-y", "mcp-remote@latest",
+          mcpUrl,
+          "--header",
+          "Authorization: Bearer ${MCP_API_KEY}"
+        ],
+        env: {
+          MCP_API_KEY: "mi_your_api_key_here"
+        }
       }
     }
   }, null, 2));
   lines.push("```\n");
   lines.push("### Connecting with Cursor / other MCP clients\n");
-  lines.push("Use the Streamable HTTP URL above with your client's MCP configuration. Most clients support a `url` + `transport` pair:\n");
+  lines.push("Use `mcp-remote` to bridge stdio-based clients to the Streamable HTTP transport:\n");
   lines.push("```json");
   lines.push(JSON.stringify({
-    url: `${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`,
-    transport: "streamable-http"
+    "messages-ingester": {
+      command: "npx",
+      args: [
+        "-y", "mcp-remote@latest",
+        mcpUrl,
+        "--header",
+        "Authorization: Bearer ${MCP_API_KEY}"
+      ],
+      env: {
+        MCP_API_KEY: "mi_your_api_key_here"
+      }
+    }
   }, null, 2));
   lines.push("```\n");
+  lines.push("For clients that support Streamable HTTP natively, use the URL and add the `Authorization` header directly.\n");
   lines.push("### Example: Using via MCP Inspector\n");
   lines.push("```bash");
   lines.push("npx @modelcontextprotocol/inspector");
   lines.push("```\n");
-  lines.push("Then enter the MCP server URL and select **Streamable HTTP** as the transport.\n");
+  lines.push("Enter the MCP server URL, select **Streamable HTTP** as the transport, and add the header `Authorization: Bearer mi_your_api_key_here`.\n");
 
   // Quick examples per platform
   lines.push("## Quick Examples\n");
