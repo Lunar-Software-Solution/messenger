@@ -1,25 +1,38 @@
 
 
-## Plan: Fix API Spec — 4 Issues
+## Plan: Add Chat View Alongside Existing Log View
 
-All changes are in **`src/lib/api-spec.ts`** only. No database or migration changes needed — this is purely documentation.
+Keep the current LogStream exactly as-is. Add a tab toggle at the top of the left panel to switch between "Logs" (current) and "Chat" (new formatted message view).
 
-### 1. Add `trace` to the level enum
-Add `"trace"` to the `LogEntry.level` enum array (before `"debug"`).
+### New Files
 
-### 2. Add `whatsapp_contacts` endpoint
-Add a new `ContactUpsert` schema and a `POST /whatsapp_contacts` path for upserting contacts (id, name, notify, verified_name). This documents the endpoint the external ingester uses to sync contacts into Supabase, which the frontend autocomplete queries.
+1. **`src/components/whatsapp/ChatView.tsx`** — Chat-style message viewer filtering logs to `source === "baileys:message"`. Renders bubbles aligned left/right based on `from_me`. Includes auto-scroll, date separators, and search.
 
-### 3. Fix session path
-Change the path key from `"/whatsapp_session?id=eq.1"` to `"/whatsapp_session"`. Add a `parameters` array with `id=eq.1` as a required query parameter, which is the proper OpenAPI way to express PostgREST filtering.
+2. **`src/components/whatsapp/ChatBubble.tsx`** — Message bubble supporting:
+   - Text with URL detection, images (thumbnail + lightbox), video (`<video>`), audio (`<audio>`), documents (file card), stickers, location card, vCard contact card
+   - Reactions (emoji pills from `metadata.reactions[]`)
+   - Quoted/reply messages (preview bar from `metadata.quoted`)
+   - Profile picture (avatar from `metadata.profile_pic_url` or initials)
+   - Sender name (colored, for group chats)
+   - Read receipts (checkmarks from `metadata.ack`: 0-3)
+   - Forwarded, starred, deleted, edited indicators
+   - Caption below media
 
-### 4. Clarify `media_url` semantics
-Update the `OutboxMessage.media_url` description to clarify:
-- For **outbound** messages (inserted by the dashboard): this is a **Supabase Storage path** (e.g. `outbox/1234_photo.jpg`) within the `whatsapp-media` bucket.
-- For **inbound** messages (logged in `whatsapp_logs.metadata.media_url`): this is typically a **full public URL** to the downloaded media.
+3. **`src/components/whatsapp/DateSeparator.tsx`** — "Today", "Yesterday", or formatted date between message groups.
 
-Add a note in the `LogEntry.metadata` description as well to clarify that `media_url` in log metadata is a public URL.
+4. **`src/components/whatsapp/MessageLightbox.tsx`** — Full-screen image/video viewer with keyboard dismiss.
 
-### Files Changed
-- `src/lib/api-spec.ts` — all 4 fixes above
+### Modified Files
+
+1. **`src/components/whatsapp/LogStream.tsx`** — Add a `Tabs` component at the top with two tabs: "Logs" and "Chat". "Logs" tab renders the existing log list unchanged. "Chat" tab renders `<ChatView>`. Filter bar stays visible in both tabs.
+
+2. **`src/types/whatsapp.ts`** — Add `WhatsAppMessageMeta` interface for typed metadata access (type, body, caption, media_url, from_me, remote_jid, push_name, profile_pic_url, quoted, reactions, ack, is_forwarded, is_starred, is_revoked, is_edited, latitude, longitude, vcard).
+
+3. **`src/pages/Index.tsx`** — Pass `contactsMap` to `LogStream` so Chat view can resolve contact names/pictures.
+
+### Design
+- Dark theme: green outgoing bubbles, dark-gray incoming bubbles
+- Bubbles left-aligned (incoming) / right-aligned (outgoing)
+- Graceful fallback when metadata fields are missing
+- No database changes needed
 
