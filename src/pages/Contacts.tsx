@@ -50,6 +50,11 @@ const PLATFORM_COLOR: Record<string, string> = {
   telegram: "text-platform-telegram",
 };
 
+const displayName = (c: Contact) =>
+  c.name || c.notify || c.verified_name || c.id.split("@")[0];
+
+const isGroup = (c: Contact) => c.id.endsWith("@g.us");
+
 const Contacts = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
