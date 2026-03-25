@@ -11,6 +11,10 @@ export const apiSpec = {
       url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/functions/v1/api-proxy",
       description: "Messages Ingester API Proxy",
     },
+    {
+      url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/functions/v1/media-upload",
+      description: "Media Upload Endpoint",
+    },
   ],
   security: [{ ApiKeyAuth: [] }],
   components: {
@@ -90,7 +94,17 @@ export const apiSpec = {
           profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
         },
       },
+      MediaUploadResponse: {
+        type: "object",
+        properties: {
+          media_url: { type: "string", description: "Public URL of the uploaded file" },
+          storage_path: { type: "string", description: "Path within the whatsapp-media bucket" },
+          mime_type: { type: "string", description: "Detected MIME type" },
+          size: { type: "number", description: "File size in bytes" },
+        },
+      },
     },
+  },
   },
   paths: {
     "/whatsapp_logs": {
