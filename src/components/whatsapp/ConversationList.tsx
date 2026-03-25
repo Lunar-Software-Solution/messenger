@@ -24,8 +24,10 @@ interface ConversationSummary {
 }
 
 const ConversationList = ({ logs, contacts, selectedJid, onSelect }: ConversationListProps) => {
+  const MESSAGE_SOURCES = new Set(["baileys:message", "signal:message", "telegram:message", "wechat:message"]);
+
   const conversations = useMemo(() => {
-    const messages = logs.filter((l) => l.source === "baileys:message");
+    const messages = logs.filter((l) => MESSAGE_SOURCES.has(l.source));
     const map = new Map<string, ConversationSummary>();
 
     messages.forEach((msg) => {
