@@ -35,6 +35,51 @@ export function generateMarkdown(): string {
   lines.push("");
   lines.push("When a log entry with a message source is inserted, the proxy **automatically extracts** contact information (`remote_jid`, `push_name`, `profile_pic_url`) from the metadata and upserts it into the contacts table.\n");
 
+  // MCP Server
+  lines.push("## MCP Server (Model Context Protocol)\n");
+  lines.push("An MCP server is available for AI agents and tools to query logs, contacts, and send messages programmatically using the [Model Context Protocol](https://modelcontextprotocol.io).\n");
+  lines.push("### Endpoint\n");
+  lines.push("```");
+  lines.push(`${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`);
+  lines.push("```\n");
+  lines.push("### Transport\n");
+  lines.push("The server uses the **Streamable HTTP** transport. Connect using any MCP-compatible client.\n");
+  lines.push("### Available Tools\n");
+  lines.push("| Tool | Description |");
+  lines.push("|------|-------------|");
+  lines.push("| `query_logs` | Search/filter message logs by source, level, date range, contact |");
+  lines.push("| `query_contacts` | List or search contacts across all platforms |");
+  lines.push("| `query_outbox` | Check outbound message delivery status |");
+  lines.push("| `send_message` | Queue an outbound message for delivery |");
+  lines.push("| `get_session` | Check the current connection session status |");
+  lines.push("| `get_conversation` | Get full chat history with a specific contact |");
+  lines.push("");
+  lines.push("### Connecting with Claude Desktop\n");
+  lines.push("Add this to your `claude_desktop_config.json`:\n");
+  lines.push("```json");
+  lines.push(JSON.stringify({
+    mcpServers: {
+      "messages-ingester": {
+        transport: "streamable-http",
+        url: `${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`
+      }
+    }
+  }, null, 2));
+  lines.push("```\n");
+  lines.push("### Connecting with Cursor / other MCP clients\n");
+  lines.push("Use the Streamable HTTP URL above with your client's MCP configuration. Most clients support a `url` + `transport` pair:\n");
+  lines.push("```json");
+  lines.push(JSON.stringify({
+    url: `${spec.servers[0].url.replace('/api-proxy', '/mcp-server')}`,
+    transport: "streamable-http"
+  }, null, 2));
+  lines.push("```\n");
+  lines.push("### Example: Using via MCP Inspector\n");
+  lines.push("```bash");
+  lines.push("npx @modelcontextprotocol/inspector");
+  lines.push("```\n");
+  lines.push("Then enter the MCP server URL and select **Streamable HTTP** as the transport.\n");
+
   // Quick examples per platform
   lines.push("## Quick Examples\n");
 
