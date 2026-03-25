@@ -33,7 +33,7 @@ const LogStream = ({ logs }: LogStreamProps) => {
     return logs.filter((l) => {
       if (levelFilter !== "all" && l.level !== levelFilter) return false;
       if (sourceFilter && !l.source?.toLowerCase().includes(sourceFilter.toLowerCase())) return false;
-      if (messagesOnly && l.source !== "baileys:message") return false;
+      if (messagesOnly && !["baileys:message", "signal:message", "telegram:message", "wechat:message"].includes(l.source)) return false;
       return true;
     });
   }, [logs, levelFilter, sourceFilter, messagesOnly]);
@@ -49,7 +49,8 @@ const LogStream = ({ logs }: LogStreamProps) => {
     return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
-  const isMessageRow = (log: WhatsAppLog) => log.source === "baileys:message";
+  const MESSAGE_SOURCES = new Set(["baileys:message", "signal:message", "telegram:message", "wechat:message"]);
+  const isMessageRow = (log: WhatsAppLog) => MESSAGE_SOURCES.has(log.source);
 
   const renderMediaIndicator = (meta: Record<string, any> | null) => {
     if (!meta) return null;

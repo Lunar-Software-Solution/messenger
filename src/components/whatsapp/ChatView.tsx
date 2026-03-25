@@ -19,8 +19,10 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
   const [selectedJid, setSelectedJid] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  const MESSAGE_SOURCES = new Set(["baileys:message", "signal:message", "telegram:message", "wechat:message"]);
+
   const allMessages = useMemo(
-    () => logs.filter((l) => l.source === "baileys:message"),
+    () => logs.filter((l) => MESSAGE_SOURCES.has(l.source)),
     [logs]
   );
 
