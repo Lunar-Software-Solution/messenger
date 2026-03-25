@@ -33,7 +33,7 @@ const LogStream = ({ logs }: LogStreamProps) => {
     return logs.filter((l) => {
       if (levelFilter !== "all" && l.level !== levelFilter) return false;
       if (sourceFilter && !l.source?.toLowerCase().includes(sourceFilter.toLowerCase())) return false;
-      if (messagesOnly && l.source !== "baileys:message") return false;
+      if (messagesOnly && !["baileys:message", "signal:message", "telegram:message", "wechat:message"].includes(l.source)) return false;
       return true;
     });
   }, [logs, levelFilter, sourceFilter, messagesOnly]);
