@@ -104,6 +104,12 @@ export const apiSpec = {
           notify: { type: "string", nullable: true, description: "Push/notify/display name set by the contact" },
           verified_name: { type: "string", nullable: true, description: "Business verified name, if any" },
           profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Platform this contact belongs to. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       MediaUploadResponse: {
