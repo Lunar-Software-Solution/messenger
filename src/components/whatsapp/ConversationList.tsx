@@ -33,8 +33,10 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
 
       const existing = map.get(jid);
       const contact = contacts.get(jid);
-      const name = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || jid.split("@")[0];
       const isGroup = jid.endsWith("@g.us");
+      const name = isGroup
+        ? (contact?.name || meta.group_subject || meta.push_name || `Group ${jid.split("@")[0].slice(-6)}`)
+        : (meta.push_name || contact?.notify || contact?.name || contact?.verified_name || jid.split("@")[0]);
 
       const preview = meta.is_revoked
         ? "🚫 Deleted"
