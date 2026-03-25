@@ -20,6 +20,7 @@ interface ConversationSummary {
   lastTimestamp: string;
   messageCount: number;
   isGroup: boolean;
+  participants: Set<string>;
 }
 
 const ConversationList = ({ logs, contacts, selectedJid, onSelect }: ConversationListProps) => {
