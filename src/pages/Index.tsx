@@ -114,20 +114,20 @@ const Index = () => {
             {activeView === "chat" ? (
               /* Chat view — full width with send panel */
               <>
-                <div className="w-[65%] border-r border-border flex flex-col min-h-0">
+              <div className="w-[70%] border-r border-border flex flex-col min-h-0">
                   <ChatView logs={logs} contacts={contactsMap} />
                 </div>
-                <div className="w-[35%] flex flex-col min-h-0">
+                <div className="w-[30%] flex flex-col min-h-0">
                   <SendPanel recentSent={recentSent} contacts={contactsMap} />
                 </div>
               </>
             ) : (
               /* Logs view — full width with send panel */
               <>
-                <div className="w-[65%] border-r border-border flex flex-col min-h-0">
+              <div className="w-[70%] border-r border-border flex flex-col min-h-0">
                   <LogStream logs={logs} />
                 </div>
-                <div className="w-[35%] flex flex-col min-h-0">
+                <div className="w-[30%] flex flex-col min-h-0">
                   <SendPanel recentSent={recentSent} contacts={contactsMap} />
                 </div>
               </>

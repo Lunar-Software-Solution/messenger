@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { WhatsAppLog, WhatsAppContact } from "@/types/whatsapp";
+import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ChatBubble from "./ChatBubble";
 import DateSeparator from "./DateSeparator";
 import MessageLightbox from "./MessageLightbox";
 import ContactDetailsPanel from "./ContactDetailsPanel";
+import ConversationList from "./ConversationList";
 
 interface ChatViewProps {
   logs: WhatsAppLog[];
@@ -15,12 +16,21 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
   const [autoScroll, setAutoScroll] = useState(true);
   const [lightbox, setLightbox] = useState<{ url: string; type: "image" | "video" } | null>(null);
   const [selectedContact, setSelectedContact] = useState<{ jid: string; profilePicUrl?: string; pushName?: string } | null>(null);
+  const [selectedJid, setSelectedJid] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const messages = useMemo(
+  const allMessages = useMemo(
     () => logs.filter((l) => l.source === "baileys:message"),
     [logs]
   );
+
+  const messages = useMemo(() => {
+    if (!selectedJid) return allMessages;
+    return allMessages.filter((msg) => {
+      const meta = (msg.metadata || {}) as WhatsAppMessageMeta;
+      return meta.remote_jid === selectedJid;
+    });
+  }, [allMessages, selectedJid]);
 
   useEffect(() => {
     if (autoScroll && bottomRef.current) {
@@ -68,19 +78,32 @@ const ChatView = ({ logs, contacts }: ChatViewProps) => {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      {messages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-          No messages yet
-        </div>
-      ) : (
-        <ScrollArea className="flex-1">
-          <div className="py-2">
-            {renderMessages()}
-            <div ref={bottomRef} />
+    <div className="flex h-full">
+      {/* Conversation list sidebar */}
+      <div className="w-[240px] shrink-0">
+        <ConversationList
+          logs={logs}
+          contacts={contacts}
+          selectedJid={selectedJid}
+          onSelect={setSelectedJid}
+        />
+      </div>
+
+      {/* Chat area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {messages.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+            {selectedJid ? "No messages in this conversation" : "No messages yet"}
           </div>
-        </ScrollArea>
-      )}
+        ) : (
+          <ScrollArea className="flex-1">
+            <div className="py-2">
+              {renderMessages()}
+              <div ref={bottomRef} />
+            </div>
+          </ScrollArea>
+        )}
+      </div>
 
       {lightbox && (
         <MessageLightbox
