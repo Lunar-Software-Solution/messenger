@@ -32,3 +32,41 @@ export interface WhatsAppContact {
   verified_name: string | null;
   updated_at: string;
 }
+
+export interface WhatsAppQuotedMessage {
+  body?: string;
+  from_me?: boolean;
+  push_name?: string;
+  type?: string;
+  media_url?: string;
+}
+
+export interface WhatsAppReaction {
+  emoji: string;
+  from_jid?: string;
+  push_name?: string;
+}
+
+export interface WhatsAppMessageMeta {
+  type?: 'text' | 'image' | 'video' | 'audio' | 'document' | 'sticker' | 'location' | 'contact' | 'reaction';
+  body?: string;
+  caption?: string;
+  media_url?: string;
+  mimetype?: string;
+  file_name?: string;
+  file_size?: number;
+  from_me?: boolean;
+  remote_jid?: string;
+  push_name?: string;
+  profile_pic_url?: string;
+  quoted?: WhatsAppQuotedMessage;
+  reactions?: WhatsAppReaction[];
+  ack?: 0 | 1 | 2 | 3;
+  is_forwarded?: boolean;
+  is_starred?: boolean;
+  is_revoked?: boolean;
+  is_edited?: boolean;
+  latitude?: number;
+  longitude?: number;
+  vcard?: string;
+}
