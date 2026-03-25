@@ -143,7 +143,7 @@ export function generateMarkdown(): string {
   lines.push(`curl -X POST "${spec.servers[0].url}/message_logs" \\`);
   lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
   lines.push(`  -H "Content-Type: application/json" \\`);
-  lines.push(`  -d '{"level":"info","message":"New message","source":"baileys:message","metadata":{"remote_jid":"5511999999999@s.whatsapp.net","push_name":"Alice","body":"Hello!"}}'`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"baileys:message","platform":"whatsapp","metadata":{"remote_jid":"5511999999999@s.whatsapp.net","push_name":"Alice","body":"Hello!"}}'`);
   lines.push("```\n");
 
   lines.push("### Signal\n");
@@ -151,7 +151,7 @@ export function generateMarkdown(): string {
   lines.push(`curl -X POST "${spec.servers[0].url}/message_logs" \\`);
   lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
   lines.push(`  -H "Content-Type: application/json" \\`);
-  lines.push(`  -d '{"level":"info","message":"New message","source":"signal:message","metadata":{"remote_jid":"+15551234567","push_name":"Bob","body":"Hey there!"}}'`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"signal:message","platform":"signal","metadata":{"remote_jid":"+15551234567","push_name":"Bob","body":"Hey there!"}}'`);
   lines.push("```\n");
 
   lines.push("### Telegram\n");
@@ -159,7 +159,7 @@ export function generateMarkdown(): string {
   lines.push(`curl -X POST "${spec.servers[0].url}/message_logs" \\`);
   lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
   lines.push(`  -H "Content-Type: application/json" \\`);
-  lines.push(`  -d '{"level":"info","message":"New message","source":"telegram:message","metadata":{"remote_jid":"123456789","push_name":"Charlie","body":"Привет!"}}'`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"telegram:message","platform":"telegram","metadata":{"remote_jid":"123456789","push_name":"Charlie","body":"Привет!"}}'`);
   lines.push("```\n");
 
   lines.push("### WeChat\n");
@@ -167,7 +167,7 @@ export function generateMarkdown(): string {
   lines.push(`curl -X POST "${spec.servers[0].url}/message_logs" \\`);
   lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
   lines.push(`  -H "Content-Type: application/json" \\`);
-  lines.push(`  -d '{"level":"info","message":"New message","source":"wechat:message","metadata":{"remote_jid":"oXYZ123abc","push_name":"David","body":"你好!"}}'`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"wechat:message","platform":"wechat","metadata":{"remote_jid":"oXYZ123abc","push_name":"David","body":"你好!"}}'`);
   lines.push("```\n");
 
   // Endpoints
