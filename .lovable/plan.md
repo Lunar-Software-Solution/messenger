@@ -1,38 +1,44 @@
 
 
-## Plan: Add Chat View Alongside Existing Log View
+## Plan: Add Conversation List to Chat View
 
-Keep the current LogStream exactly as-is. Add a tab toggle at the top of the left panel to switch between "Logs" (current) and "Chat" (new formatted message view).
+Currently all messages from all contacts are mixed together in one stream. The fix is to add a **conversation list sidebar** on the left of the chat area, like WhatsApp's main screen — you pick a conversation, then only that conversation's messages show.
 
-### New Files
+### Layout Change
 
-1. **`src/components/whatsapp/ChatView.tsx`** — Chat-style message viewer filtering logs to `source === "baileys:message"`. Renders bubbles aligned left/right based on `from_me`. Includes auto-scroll, date separators, and search.
+The current 65% chat area splits into a conversation list (30%) + active chat (70%):
 
-2. **`src/components/whatsapp/ChatBubble.tsx`** — Message bubble supporting:
-   - Text with URL detection, images (thumbnail + lightbox), video (`<video>`), audio (`<audio>`), documents (file card), stickers, location card, vCard contact card
-   - Reactions (emoji pills from `metadata.reactions[]`)
-   - Quoted/reply messages (preview bar from `metadata.quoted`)
-   - Profile picture (avatar from `metadata.profile_pic_url` or initials)
-   - Sender name (colored, for group chats)
-   - Read receipts (checkmarks from `metadata.ack`: 0-3)
-   - Forwarded, starred, deleted, edited indicators
-   - Caption below media
+```text
+┌──────────────────────────────────────────────────┐
+│  Connection Bar               [Messages] [Logs]  │
+├────────┬─────────────────────┬───────────────────┤
+│ Convos │  Chat (filtered)    │  SendPanel        │
+│        │                     │                   │
+│ Alice  │  Alice: Hey!        │                   │
+│ Group1 │  You: Hi there      │                   │
+│ Bob    │  Alice: [image]     │                   │
+│        │                     │                   │
+└────────┴─────────────────────┴───────────────────┘
+```
 
-3. **`src/components/whatsapp/DateSeparator.tsx`** — "Today", "Yesterday", or formatted date between message groups.
+### New File
 
-4. **`src/components/whatsapp/MessageLightbox.tsx`** — Full-screen image/video viewer with keyboard dismiss.
+1. **`src/components/whatsapp/ConversationList.tsx`** — Left sidebar listing unique conversations derived from message logs:
+   - Groups messages by `remote_jid`
+   - Shows avatar, contact name (from contacts map or push_name), last message preview, timestamp, and unread-style count
+   - Sorted by most recent message
+   - Clicking selects the conversation; active conversation is highlighted
+   - An "All" option at top to show all messages (current behavior)
 
 ### Modified Files
 
-1. **`src/components/whatsapp/LogStream.tsx`** — Add a `Tabs` component at the top with two tabs: "Logs" and "Chat". "Logs" tab renders the existing log list unchanged. "Chat" tab renders `<ChatView>`. Filter bar stays visible in both tabs.
+1. **`src/components/whatsapp/ChatView.tsx`** — Add `selectedJid` state. Render `ConversationList` on the left and filter messages to the selected JID. Pass contacts map to both components.
 
-2. **`src/types/whatsapp.ts`** — Add `WhatsAppMessageMeta` interface for typed metadata access (type, body, caption, media_url, from_me, remote_jid, push_name, profile_pic_url, quoted, reactions, ack, is_forwarded, is_starred, is_revoked, is_edited, latitude, longitude, vcard).
+2. **`src/pages/Index.tsx`** — Give the chat panel more width (bump from 65% to 70%) since the conversation list needs space inside it.
 
-3. **`src/pages/Index.tsx`** — Pass `contactsMap` to `LogStream` so Chat view can resolve contact names/pictures.
-
-### Design
-- Dark theme: green outgoing bubbles, dark-gray incoming bubbles
-- Bubbles left-aligned (incoming) / right-aligned (outgoing)
-- Graceful fallback when metadata fields are missing
-- No database changes needed
+### Key Details
+- Conversations extracted from messages via `useMemo` — no new DB queries needed
+- Group chats (`@g.us`) show group name if available, individual chats show contact name
+- "All Messages" option preserves the current mixed view as a fallback
+- Selected conversation pre-fills the `to_jid` in SendPanel (optional enhancement)
 
