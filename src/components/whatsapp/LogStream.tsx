@@ -5,7 +5,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface LogStreamProps {
   logs: WhatsAppLog[];
