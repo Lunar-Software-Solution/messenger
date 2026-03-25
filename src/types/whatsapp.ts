@@ -39,6 +39,7 @@ export interface WhatsAppContact {
   name: string | null;
   notify: string | null;
   verified_name: string | null;
+  profile_pic_url: string | null;
   updated_at: string;
 }
 

@@ -73,7 +73,6 @@ Deno.serve(async (req) => {
 
   // Parse the request path — the URL path after /api-proxy/ is the table + query
   const url = new URL(req.url);
-  // Path format: /api-proxy/whatsapp_logs or /api-proxy/whatsapp_session?id=eq.1
   const pathParts = url.pathname.split("/api-proxy/");
   const tablePath = pathParts.length > 1 ? pathParts[1] : "";
   const tableName = tablePath.split("?")[0].split("/")[0];
@@ -85,9 +84,41 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Read body once, clone for side-effects
+  const body = ["GET", "HEAD"].includes(req.method) ? undefined : await req.text();
+
+  // Side-effect: extract contacts from log inserts (fire and forget)
+  if (req.method === "POST" && tableName === "whatsapp_logs" && body) {
+    try {
+      const parsed = JSON.parse(body);
+      const entries = Array.isArray(parsed) ? parsed : [parsed];
+      const contactUpserts = new Map<string, Record<string, string>>();
+
+      for (const entry of entries) {
+        if (entry.source !== "baileys:message" || !entry.metadata?.remote_jid) continue;
+        const m = entry.metadata;
+        const jid: string = m.remote_jid;
+        const existing = contactUpserts.get(jid) || { id: jid };
+
+        if (m.profile_pic_url) existing.profile_pic_url = m.profile_pic_url;
+        if (m.push_name) existing.notify = m.push_name;
+
+        contactUpserts.set(jid, existing);
+      }
+
+      if (contactUpserts.size > 0) {
+        adminClient
+          .from("whatsapp_contacts")
+          .upsert(Array.from(contactUpserts.values()), { onConflict: "id", ignoreDuplicates: false })
+          .then();
+      }
+    } catch {
+      // Don't block the main request if parsing fails
+    }
+  }
+
   // Forward to PostgREST
   const postgrestUrl = `${supabaseUrl}/rest/v1/${tableName}${url.search}`;
-  const body = ["GET", "HEAD"].includes(req.method) ? undefined : await req.text();
 
   const forwardHeaders: Record<string, string> = {
     "apikey": serviceRoleKey,
@@ -95,7 +126,6 @@ Deno.serve(async (req) => {
     "Content-Type": "application/json",
   };
 
-  // Forward Prefer header if present (for upserts, return=representation, etc.)
   const prefer = req.headers.get("Prefer");
   if (prefer) {
     forwardHeaders["Prefer"] = prefer;
