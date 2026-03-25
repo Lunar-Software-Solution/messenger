@@ -58,6 +58,7 @@ export const apiSpec = {
           name: { type: "string", nullable: true, description: "Contact's address-book name" },
           notify: { type: "string", nullable: true, description: "Push/notify name set by the contact" },
           verified_name: { type: "string", nullable: true, description: "Business verified name, if any" },
+          profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
         },
       },
     },

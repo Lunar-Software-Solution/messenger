@@ -53,7 +53,7 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
         map.set(jid, {
           jid,
           name: existing?.name || name,
-          profilePic: meta.profile_pic_url || existing?.profilePic,
+          profilePic: meta.profile_pic_url || contact?.profile_pic_url || existing?.profilePic,
           lastMessage: fullPreview,
           lastTimestamp: msg.created_at,
           messageCount: (existing?.messageCount || 0) + 1,

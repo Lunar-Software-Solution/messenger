@@ -76,6 +76,7 @@ export type Database = {
           id: string
           name: string | null
           notify: string | null
+          profile_pic_url: string | null
           updated_at: string
           verified_name: string | null
         }
@@ -83,6 +84,7 @@ export type Database = {
           id: string
           name?: string | null
           notify?: string | null
+          profile_pic_url?: string | null
           updated_at?: string
           verified_name?: string | null
         }
@@ -90,6 +92,7 @@ export type Database = {
           id?: string
           name?: string | null
           notify?: string | null
+          profile_pic_url?: string | null
           updated_at?: string
           verified_name?: string | null
         }
