@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ConversationListProps {
   logs: WhatsAppLog[];
