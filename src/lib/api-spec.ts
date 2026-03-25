@@ -105,7 +105,6 @@ export const apiSpec = {
       },
     },
   },
-  },
   paths: {
     "/whatsapp_logs": {
       post: {
