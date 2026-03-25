@@ -47,6 +47,126 @@ export type Database = {
         }
         Relationships: []
       }
+      message_contacts: {
+        Row: {
+          id: string
+          name: string | null
+          notify: string | null
+          platform: string
+          profile_pic_url: string | null
+          updated_at: string
+          verified_name: string | null
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          notify?: string | null
+          platform?: string
+          profile_pic_url?: string | null
+          updated_at?: string
+          verified_name?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          notify?: string | null
+          platform?: string
+          profile_pic_url?: string | null
+          updated_at?: string
+          verified_name?: string | null
+        }
+        Relationships: []
+      }
+      message_logs: {
+        Row: {
+          created_at: string
+          id: number
+          level: string
+          message: string
+          metadata: Json | null
+          platform: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          level?: string
+          message?: string
+          metadata?: Json | null
+          platform?: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          level?: string
+          message?: string
+          metadata?: Json | null
+          platform?: string
+          source?: string
+        }
+        Relationships: []
+      }
+      message_outbox: {
+        Row: {
+          content: string | null
+          created_at: string
+          error: string | null
+          id: number
+          media_type: string | null
+          media_url: string | null
+          platform: string
+          status: string
+          to_jid: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          id?: never
+          media_type?: string | null
+          media_url?: string | null
+          platform?: string
+          status?: string
+          to_jid: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          id?: never
+          media_type?: string | null
+          media_url?: string | null
+          platform?: string
+          status?: string
+          to_jid?: string
+        }
+        Relationships: []
+      }
+      message_session: {
+        Row: {
+          id: number
+          platform: string
+          qr_data: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          platform?: string
+          qr_data?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          platform?: string
+          qr_data?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -67,114 +187,6 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      whatsapp_contacts: {
-        Row: {
-          id: string
-          name: string | null
-          notify: string | null
-          profile_pic_url: string | null
-          updated_at: string
-          verified_name: string | null
-        }
-        Insert: {
-          id: string
-          name?: string | null
-          notify?: string | null
-          profile_pic_url?: string | null
-          updated_at?: string
-          verified_name?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string | null
-          notify?: string | null
-          profile_pic_url?: string | null
-          updated_at?: string
-          verified_name?: string | null
-        }
-        Relationships: []
-      }
-      whatsapp_logs: {
-        Row: {
-          created_at: string
-          id: number
-          level: string
-          message: string
-          metadata: Json | null
-          source: string
-        }
-        Insert: {
-          created_at?: string
-          id?: never
-          level?: string
-          message?: string
-          metadata?: Json | null
-          source?: string
-        }
-        Update: {
-          created_at?: string
-          id?: never
-          level?: string
-          message?: string
-          metadata?: Json | null
-          source?: string
-        }
-        Relationships: []
-      }
-      whatsapp_outbox: {
-        Row: {
-          content: string | null
-          created_at: string
-          error: string | null
-          id: number
-          media_type: string | null
-          media_url: string | null
-          status: string
-          to_jid: string
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string
-          error?: string | null
-          id?: never
-          media_type?: string | null
-          media_url?: string | null
-          status?: string
-          to_jid: string
-        }
-        Update: {
-          content?: string | null
-          created_at?: string
-          error?: string | null
-          id?: never
-          media_type?: string | null
-          media_url?: string | null
-          status?: string
-          to_jid?: string
-        }
-        Relationships: []
-      }
-      whatsapp_session: {
-        Row: {
-          id: number
-          qr_data: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          id?: number
-          qr_data?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: number
-          qr_data?: string | null
-          status?: string
           updated_at?: string
         }
         Relationships: []
