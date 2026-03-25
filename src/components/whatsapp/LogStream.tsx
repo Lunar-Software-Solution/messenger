@@ -159,6 +159,7 @@ const LogStream = ({ logs }: LogStreamProps) => {
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
+                </div>
                 {expanded && (
                   <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all bg-background p-2 rounded">
                     {log.message}
