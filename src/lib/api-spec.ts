@@ -54,6 +54,12 @@ export const apiSpec = {
             description:
               "Arbitrary JSON metadata. For message logs, include: `remote_jid` (contact/group ID), `push_name`, `profile_pic_url`, `media_url`, `media_type`, `from_me`, `type` (text/image/video/audio/document/sticker/location/contact). Contact data is auto-extracted from message logs.",
           },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Target platform. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       OutboxMessage: {
@@ -71,6 +77,12 @@ export const apiSpec = {
             description: "Supabase Storage path within the `whatsapp-media` bucket (e.g. `outbox/1234_photo.jpg`). Resolve via `{SUPABASE_URL}/storage/v1/object/public/whatsapp-media/{media_url}`.",
           },
           media_type: { type: "string", enum: ["image", "video", "audio", "document"], nullable: true },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Target platform. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       SessionUpdate: {
