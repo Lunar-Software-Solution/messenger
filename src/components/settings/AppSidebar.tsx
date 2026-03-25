@@ -1,4 +1,5 @@
-import { Key, FileText } from "lucide-react";
+import { Key, FileText, MessageSquare, Shield, MessageCircle, Send } from "lucide-react";
+import { MessagingPlatform, PLATFORM_LABELS } from "@/types/whatsapp";
 import {
   Sidebar,
   SidebarContent,
@@ -11,17 +12,51 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+const PLATFORM_ICONS: Record<MessagingPlatform, React.ElementType> = {
+  whatsapp: MessageSquare,
+  signal: Shield,
+  wechat: MessageCircle,
+  telegram: Send,
+};
+
+const platforms: MessagingPlatform[] = ['whatsapp', 'signal', 'wechat', 'telegram'];
+
 interface AppSidebarProps {
   onOpenPanel: (panel: "api-keys" | "api-docs") => void;
+  activePlatform: MessagingPlatform;
+  onSelectPlatform: (platform: MessagingPlatform) => void;
 }
 
-export function AppSidebar({ onOpenPanel }: AppSidebarProps) {
+export function AppSidebar({ onOpenPanel, activePlatform, onSelectPlatform }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 
   return (
     <Sidebar collapsible="icon">
       <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Platforms</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {platforms.map((p) => {
+                const Icon = PLATFORM_ICONS[p];
+                const isActive = activePlatform === p;
+                return (
+                  <SidebarMenuItem key={p}>
+                    <SidebarMenuButton
+                      onClick={() => onSelectPlatform(p)}
+                      className={`cursor-pointer ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {!collapsed && <span>{PLATFORM_LABELS[p]}</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Settings</SidebarGroupLabel>
           <SidebarGroupContent>
