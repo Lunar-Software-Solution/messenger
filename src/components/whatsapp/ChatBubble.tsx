@@ -49,6 +49,7 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
   const fromMe = meta.from_me ?? rawMessage.includes("→");
   const isGroup = meta.remote_jid?.endsWith("@g.us") ?? false;
   const senderJid = meta.remote_jid || "";
+  const participantKey = isGroup ? (meta.push_name || rawSender || senderJid) : senderJid;
   const contact = contacts.get(senderJid);
   const senderName = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || rawSender || senderJid.split("@")[0];
   const profilePic = meta.profile_pic_url || contact?.profile_pic_url;
@@ -199,7 +200,9 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
         <div className="mr-2 mt-auto mb-1 shrink-0 cursor-pointer" onClick={() => onContactClick(senderJid, profilePic, senderName)}>
           <Avatar className="h-7 w-7 hover:ring-2 hover:ring-primary/50 transition-all">
             {profilePic ? <AvatarImage src={profilePic} /> : null}
-            <AvatarFallback className="text-[10px] bg-secondary">{initials}</AvatarFallback>
+            <AvatarFallback className={`text-[10px] ${isGroup ? getSenderColor(participantKey).replace('text-', 'bg-').replace('400', '400/20') : 'bg-secondary'}`}>
+              <span className={isGroup ? getSenderColor(participantKey) : ''}>{initials}</span>
+            </AvatarFallback>
           </Avatar>
         </div>
       )}
