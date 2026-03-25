@@ -1,4 +1,4 @@
-import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
+import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact, WhatsAppReaction } from "@/types/whatsapp";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Check, CheckCheck, Clock, Star, Forward, FileText, MapPin, User,
@@ -9,6 +9,7 @@ interface ChatBubbleProps {
   log: WhatsAppLog;
   contacts: Map<string, WhatsAppContact>;
   showSender: boolean;
+  aggregatedReactions?: WhatsAppReaction[];
   onMediaClick: (url: string, type: "image" | "video") => void;
   onContactClick: (jid: string, profilePicUrl?: string, pushName?: string) => void;
 }
@@ -39,7 +40,7 @@ function linkify(text: string) {
   );
 }
 
-const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }: ChatBubbleProps) => {
+const ChatBubble = ({ log, contacts, showSender, aggregatedReactions = [], onMediaClick, onContactClick }: ChatBubbleProps) => {
   const meta = (log.metadata || {}) as WhatsAppMessageMeta;
   const rawMessage = log.message || "";
   const parsedRaw = rawMessage.match(/^\[(.*?)\]\s*[←→]\s*([^:]+):\s*([\s\S]*)$/);
@@ -174,7 +175,11 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
   };
 
   const renderReactions = () => {
-    const reactions = meta.reactions?.length ? meta.reactions : fallbackReactions;
+    const reactions = [
+      ...(meta.reactions || []),
+      ...aggregatedReactions,
+      ...(!(meta.reactions?.length || aggregatedReactions.length) ? fallbackReactions : []),
+    ];
     if (!reactions.length) return null;
     const grouped = reactions.reduce((acc, r) => {
       acc[r.emoji] = (acc[r.emoji] || 0) + 1;
@@ -184,7 +189,7 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
       <div className="flex gap-1 mt-1">
         {Object.entries(grouped).map(([emoji, count]) => (
           <span key={emoji} className="px-1.5 py-0.5 rounded-full bg-background/60 text-[11px] border border-border">
-            {emoji} {count > 1 && count}
+            {emoji} {(count as number) > 1 && (count as number)}
           </span>
         ))}
       </div>
