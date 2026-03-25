@@ -5,7 +5,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, FileAudio, FileVideo, FileText, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 interface LogStreamProps {
   logs: WhatsAppLog[];
@@ -117,7 +118,7 @@ const LogStream = ({ logs }: LogStreamProps) => {
             return (
               <div
                 key={log.id}
-                className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors ${
+                className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors group ${
                   isMsgRow ? "border-l-4 border-primary bg-primary/5" : ""
                 }`}
                 onClick={() => setExpandedId(expanded ? null : log.id)}
@@ -146,6 +147,18 @@ const LogStream = ({ logs }: LogStreamProps) => {
                     {isMsgRow ? (meta?.body || log.message) : log.message}
                   </span>
                   {isMsgRow && renderMediaIndicator(meta)}
+                  <button
+                    className="shrink-0 p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                    title="Copy log"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const text = log.message + (meta ? "\n\n" + JSON.stringify(meta, null, 2) : "");
+                      navigator.clipboard.writeText(text);
+                      toast.success("Log copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
                 </div>
                 {expanded && (
                   <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all bg-background p-2 rounded">
