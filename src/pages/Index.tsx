@@ -96,7 +96,7 @@ const Index = () => {
           <div className="flex flex-1 min-h-0">
             {/* Log stream — 65% */}
             <div className="w-[65%] border-r border-border flex flex-col min-h-0">
-              <LogStream logs={logs} />
+              <LogStream logs={logs} contacts={contactsMap} />
             </div>
 
             {/* Send panel — 35% */}
