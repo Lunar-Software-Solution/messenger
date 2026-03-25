@@ -6,12 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
 };
 
+// Tables shared across all platforms
+const SHARED_TABLES = ["whatsapp_contacts"];
+
+// Platform-specific tables (keyed by platform prefix)
+const PLATFORM_TABLES: Record<string, string[]> = {
+  whatsapp: ["whatsapp_logs", "whatsapp_outbox", "whatsapp_session", "whatsapp_contacts"],
+  signal: ["whatsapp_logs", "whatsapp_outbox", "whatsapp_contacts"],
+  telegram: ["whatsapp_logs", "whatsapp_outbox", "whatsapp_contacts"],
+  wechat: ["whatsapp_logs", "whatsapp_outbox", "whatsapp_contacts"],
+};
+
+// All allowed tables (union)
 const ALLOWED_TABLES = [
   "whatsapp_logs",
   "whatsapp_outbox",
   "whatsapp_session",
   "whatsapp_contacts",
 ];
+
+// Message sources that trigger contact extraction, keyed by platform
+const MESSAGE_SOURCES: Record<string, string> = {
+  whatsapp: "baileys:message",
+  signal: "signal:message",
+  telegram: "telegram:message",
+  wechat: "wechat:message",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -87,15 +107,18 @@ Deno.serve(async (req) => {
   // Read body once, clone for side-effects
   const body = ["GET", "HEAD"].includes(req.method) ? undefined : await req.text();
 
-  // Side-effect: extract contacts from log inserts (fire and forget)
+  // Side-effect: extract contacts from log inserts for any platform (fire and forget)
   if (req.method === "POST" && tableName === "whatsapp_logs" && body) {
     try {
       const parsed = JSON.parse(body);
       const entries = Array.isArray(parsed) ? parsed : [parsed];
       const contactUpserts = new Map<string, Record<string, string>>();
 
+      // Collect all valid message sources
+      const validSources = new Set(Object.values(MESSAGE_SOURCES));
+
       for (const entry of entries) {
-        if (entry.source !== "baileys:message" || !entry.metadata?.remote_jid) continue;
+        if (!validSources.has(entry.source) || !entry.metadata?.remote_jid) continue;
         const m = entry.metadata;
         const jid: string = m.remote_jid;
         const existing = contactUpserts.get(jid) || { id: jid };

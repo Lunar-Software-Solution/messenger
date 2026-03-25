@@ -23,13 +23,51 @@ export function generateMarkdown(): string {
   lines.push("X-API-Key: mi_your_api_key_here");
   lines.push("```\n");
 
-  // Example
-  lines.push("## Quick Example\n");
+  // Platform sources
+  lines.push("## Supported Platforms\n");
+  lines.push("All platforms share the same endpoints. Use the `source` field in log entries to identify the originating platform:\n");
+  lines.push("| Platform | Message Source | Connection Source |");
+  lines.push("|----------|---------------|-------------------|");
+  lines.push("| WhatsApp | `baileys:message` | `baileys:connection` |");
+  lines.push("| Signal | `signal:message` | `signal:connection` |");
+  lines.push("| Telegram | `telegram:message` | `telegram:connection` |");
+  lines.push("| WeChat | `wechat:message` | `wechat:connection` |");
+  lines.push("");
+  lines.push("When a log entry with a message source is inserted, the proxy **automatically extracts** contact information (`remote_jid`, `push_name`, `profile_pic_url`) from the metadata and upserts it into the contacts table.\n");
+
+  // Quick examples per platform
+  lines.push("## Quick Examples\n");
+
+  lines.push("### WhatsApp (Baileys)\n");
   lines.push("```bash");
   lines.push(`curl -X POST "${spec.servers[0].url}/whatsapp_logs" \\`);
   lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
   lines.push(`  -H "Content-Type: application/json" \\`);
-  lines.push(`  -d '{"level":"info","message":"Hello from the API","source":"my-ingester"}'`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"baileys:message","metadata":{"remote_jid":"5511999999999@s.whatsapp.net","push_name":"Alice","body":"Hello!"}}'`);
+  lines.push("```\n");
+
+  lines.push("### Signal\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[0].url}/whatsapp_logs" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -H "Content-Type: application/json" \\`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"signal:message","metadata":{"remote_jid":"+15551234567","push_name":"Bob","body":"Hey there!"}}'`);
+  lines.push("```\n");
+
+  lines.push("### Telegram\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[0].url}/whatsapp_logs" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -H "Content-Type: application/json" \\`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"telegram:message","metadata":{"remote_jid":"123456789","push_name":"Charlie","body":"Привет!"}}'`);
+  lines.push("```\n");
+
+  lines.push("### WeChat\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[0].url}/whatsapp_logs" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -H "Content-Type: application/json" \\`);
+  lines.push(`  -d '{"level":"info","message":"New message","source":"wechat:message","metadata":{"remote_jid":"oXYZ123abc","push_name":"David","body":"你好!"}}'`);
   lines.push("```\n");
 
   // Endpoints
