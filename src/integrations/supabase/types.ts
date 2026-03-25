@@ -54,6 +54,7 @@ export type Database = {
           notify: string | null
           platform: string
           profile_pic_url: string | null
+          sync_enabled: boolean
           updated_at: string
           verified_name: string | null
         }
@@ -63,6 +64,7 @@ export type Database = {
           notify?: string | null
           platform?: string
           profile_pic_url?: string | null
+          sync_enabled?: boolean
           updated_at?: string
           verified_name?: string | null
         }
@@ -72,6 +74,7 @@ export type Database = {
           notify?: string | null
           platform?: string
           profile_pic_url?: string | null
+          sync_enabled?: boolean
           updated_at?: string
           verified_name?: string | null
         }

@@ -1,0 +1,1 @@
+ALTER TABLE public.message_contacts ADD COLUMN IF NOT EXISTS sync_enabled boolean NOT NULL DEFAULT false;

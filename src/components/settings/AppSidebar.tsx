@@ -1,4 +1,5 @@
-import { Key, FileText, MessageSquare, Shield, MessageCircle, Send } from "lucide-react";
+import { Key, FileText, MessageSquare, Shield, MessageCircle, Send, Users } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { MessagingPlatform, PLATFORM_LABELS } from "@/types/whatsapp";
 import {
   Sidebar,
@@ -37,6 +38,8 @@ interface AppSidebarProps {
 export function AppSidebar({ onOpenPanel, activePlatform, onSelectPlatform }: AppSidebarProps) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">
@@ -60,6 +63,23 @@ export function AppSidebar({ onOpenPanel, activePlatform, onSelectPlatform }: Ap
                   </SidebarMenuItem>
                 );
               })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>CRM</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => navigate("/contacts")}
+                  className={`cursor-pointer ${location.pathname === "/contacts" ? "bg-accent text-accent-foreground" : ""}`}
+                >
+                  <Users className="h-4 w-4" />
+                  {!collapsed && <span>Contacts</span>}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
