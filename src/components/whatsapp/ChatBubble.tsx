@@ -49,6 +49,7 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
   const fromMe = meta.from_me ?? rawMessage.includes("→");
   const isGroup = meta.remote_jid?.endsWith("@g.us") ?? false;
   const senderJid = meta.remote_jid || "";
+  const participantKey = isGroup ? (meta.push_name || rawSender || senderJid) : senderJid;
   const contact = contacts.get(senderJid);
   const senderName = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || rawSender || senderJid.split("@")[0];
   const profilePic = meta.profile_pic_url || contact?.profile_pic_url;
