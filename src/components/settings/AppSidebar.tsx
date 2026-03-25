@@ -19,6 +19,13 @@ const PLATFORM_ICONS: Record<MessagingPlatform, React.ElementType> = {
   telegram: Send,
 };
 
+const PLATFORM_COLOR_CLASS: Record<MessagingPlatform, string> = {
+  whatsapp: "text-platform-whatsapp",
+  signal: "text-platform-signal",
+  wechat: "text-platform-wechat",
+  telegram: "text-platform-telegram",
+};
+
 const platforms: MessagingPlatform[] = ['whatsapp', 'signal', 'wechat', 'telegram'];
 
 interface AppSidebarProps {
@@ -47,7 +54,7 @@ export function AppSidebar({ onOpenPanel, activePlatform, onSelectPlatform }: Ap
                       onClick={() => onSelectPlatform(p)}
                       className={`cursor-pointer ${isActive ? 'bg-accent text-accent-foreground' : ''}`}
                     >
-                      <Icon className="h-4 w-4" />
+                      <Icon className={`h-4 w-4 ${PLATFORM_COLOR_CLASS[p]}`} />
                       {!collapsed && <span>{PLATFORM_LABELS[p]}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>

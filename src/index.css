@@ -34,6 +34,11 @@
 
     --radius: 0.5rem;
 
+    --platform-whatsapp: 142 71% 45%;
+    --platform-signal: 210 78% 56%;
+    --platform-wechat: 145 63% 42%;
+    --platform-telegram: 200 80% 55%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 142 71% 45%;

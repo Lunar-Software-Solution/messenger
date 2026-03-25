@@ -10,6 +10,13 @@ const PLATFORM_ICONS: Record<MessagingPlatform, React.ElementType> = {
   telegram: Send,
 };
 
+const PLATFORM_COLOR_CLASS: Record<MessagingPlatform, string> = {
+  whatsapp: "text-platform-whatsapp",
+  signal: "text-platform-signal",
+  wechat: "text-platform-wechat",
+  telegram: "text-platform-telegram",
+};
+
 interface ConnectionBarProps {
   session: WhatsAppSession | null;
   platform: MessagingPlatform;
@@ -21,15 +28,16 @@ const ConnectionBar = ({ session, platform }: ConnectionBarProps) => {
   const isConnected = status === 'connected';
   const { user, signOut } = useAuth();
   const PlatformIcon = PLATFORM_ICONS[platform];
+  const platformColor = PLATFORM_COLOR_CLASS[platform];
 
   return (
     <div className="flex items-center gap-3 px-5 py-3 bg-card border-b border-border">
-      <PlatformIcon className="h-4 w-4 text-muted-foreground" />
+      <PlatformIcon className={`h-4 w-4 ${platformColor}`} />
       <div className="flex items-center gap-2">
         <span
           className={`h-3 w-3 rounded-full ${
             isConnected
-              ? 'bg-green-500 animate-pulse'
+              ? 'bg-platform-whatsapp animate-pulse'
               : 'bg-muted-foreground'
           }`}
         />
