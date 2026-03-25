@@ -1,4 +1,4 @@
-import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
+import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact, WhatsAppReaction } from "@/types/whatsapp";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
   Check, CheckCheck, Clock, Star, Forward, FileText, MapPin, User,
