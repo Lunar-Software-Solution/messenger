@@ -147,7 +147,18 @@ const LogStream = ({ logs }: LogStreamProps) => {
                     {isMsgRow ? (meta?.body || log.message) : log.message}
                   </span>
                   {isMsgRow && renderMediaIndicator(meta)}
-                </div>
+                  <button
+                    className="shrink-0 p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                    title="Copy log"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const text = log.message + (meta ? "\n\n" + JSON.stringify(meta, null, 2) : "");
+                      navigator.clipboard.writeText(text);
+                      toast.success("Log copied to clipboard");
+                    }}
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
                 {expanded && (
                   <pre className="mt-2 text-[11px] text-muted-foreground whitespace-pre-wrap break-all bg-background p-2 rounded">
                     {log.message}
