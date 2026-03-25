@@ -54,6 +54,12 @@ export const apiSpec = {
             description:
               "Arbitrary JSON metadata. For message logs, include: `remote_jid` (contact/group ID), `push_name`, `profile_pic_url`, `media_url`, `media_type`, `from_me`, `type` (text/image/video/audio/document/sticker/location/contact). Contact data is auto-extracted from message logs.",
           },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Target platform. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       OutboxMessage: {
@@ -71,6 +77,12 @@ export const apiSpec = {
             description: "Supabase Storage path within the `whatsapp-media` bucket (e.g. `outbox/1234_photo.jpg`). Resolve via `{SUPABASE_URL}/storage/v1/object/public/whatsapp-media/{media_url}`.",
           },
           media_type: { type: "string", enum: ["image", "video", "audio", "document"], nullable: true },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Target platform. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       SessionUpdate: {
@@ -92,6 +104,12 @@ export const apiSpec = {
           notify: { type: "string", nullable: true, description: "Push/notify/display name set by the contact" },
           verified_name: { type: "string", nullable: true, description: "Business verified name, if any" },
           profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
+          platform: {
+            type: "string",
+            enum: ["whatsapp", "signal", "telegram", "wechat"],
+            default: "whatsapp",
+            description: "Platform this contact belongs to. Defaults to 'whatsapp' if omitted.",
+          },
         },
       },
       MediaUploadResponse: {
@@ -158,15 +176,15 @@ export const apiSpec = {
     "/message_session": {
       patch: {
         summary: "Update session status",
-        description: "Update the session row with new status or QR data. Currently used by WhatsApp (Baileys). Other platforms may use this for connection state tracking.",
+        description: "Update the session row for a specific platform with new status or QR data. Each platform has its own session row.",
         operationId: "updateSession",
         parameters: [
           {
-            name: "id",
+            name: "platform",
             in: "query",
             required: true,
-            description: "PostgREST filter, e.g. `eq.1` to target the single session row.",
-            schema: { type: "string", example: "eq.1" },
+            description: "PostgREST filter, e.g. `eq.whatsapp` to target the WhatsApp session row.",
+            schema: { type: "string", example: "eq.whatsapp" },
           },
         ],
         requestBody: {
