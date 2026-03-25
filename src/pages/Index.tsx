@@ -27,49 +27,57 @@ const Index = () => {
 
   // Fetch session
   useEffect(() => {
-    db.from("whatsapp_session").select("*").eq("id", 1).single()
+    db.from("message_session").select("*").eq("platform", activePlatform).single()
       .then(({ data }: any) => { if (data) setSession(data as WhatsAppSession); });
 
     const channel = supabase
       .channel("session-changes")
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "whatsapp_session" },
-        (payload: any) => setSession(payload.new as WhatsAppSession))
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "message_session" },
+        (payload: any) => {
+          if ((payload.new as any).platform === activePlatform) setSession(payload.new as WhatsAppSession);
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [activePlatform]);
 
   // Fetch logs
   useEffect(() => {
-    db.from("whatsapp_logs").select("*").order("created_at", { ascending: false }).limit(100)
+    db.from("message_logs").select("*").eq("platform", activePlatform).order("created_at", { ascending: false }).limit(100)
       .then(({ data }: any) => { if (data) setLogs((data as WhatsAppLog[]).reverse()); });
 
     const channel = supabase
       .channel("log-inserts")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_logs" },
-        (payload: any) => setLogs((prev) => [...prev, payload.new as WhatsAppLog]))
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "message_logs" },
+        (payload: any) => {
+          if ((payload.new as any).platform === activePlatform) setLogs((prev) => [...prev, payload.new as WhatsAppLog]);
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [activePlatform]);
 
   // Fetch outbox
   useEffect(() => {
-    db.from("whatsapp_outbox").select("*").order("created_at", { ascending: false }).limit(20)
+    db.from("message_outbox").select("*").eq("platform", activePlatform).order("created_at", { ascending: false }).limit(20)
       .then(({ data }: any) => { if (data) setRecentSent(data as WhatsAppOutbox[]); });
 
     const channel = supabase
       .channel("outbox-changes")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_outbox" },
-        (payload: any) => setRecentSent((prev) => [payload.new as WhatsAppOutbox, ...prev].slice(0, 20)))
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "whatsapp_outbox" },
-        (payload: any) => setRecentSent((prev) =>
-          prev.map((m) => (m.id === (payload.new as any).id ? payload.new as WhatsAppOutbox : m))))
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "message_outbox" },
+        (payload: any) => {
+          if ((payload.new as any).platform === activePlatform) setRecentSent((prev) => [payload.new as WhatsAppOutbox, ...prev].slice(0, 20));
+        })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "message_outbox" },
+        (payload: any) => {
+          if ((payload.new as any).platform === activePlatform) setRecentSent((prev) =>
+            prev.map((m) => (m.id === (payload.new as any).id ? payload.new as WhatsAppOutbox : m)));
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [activePlatform]);
 
   // Fetch contacts
   useEffect(() => {
-    db.from("whatsapp_contacts").select("*")
+    db.from("message_contacts").select("*").eq("platform", activePlatform)
       .then(({ data }: any) => {
         if (data) {
           const map = new Map<string, WhatsAppContact>();
@@ -77,7 +85,7 @@ const Index = () => {
           setContactsMap(map);
         }
       });
-  }, []);
+  }, [activePlatform]);
 
   const isWhatsApp = activePlatform === "whatsapp";
 
@@ -128,7 +136,7 @@ const Index = () => {
                     <ChatView logs={logs} contacts={contactsMap} />
                   </div>
                   <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
                   </div>
                 </>
               ) : (
@@ -137,7 +145,7 @@ const Index = () => {
                     <LogStream logs={logs} />
                   </div>
                   <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
                   </div>
                 </>
               )
