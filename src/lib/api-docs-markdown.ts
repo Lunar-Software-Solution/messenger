@@ -105,6 +105,36 @@ export function generateMarkdown(): string {
   lines.push("```\n");
   lines.push("Enter the MCP server URL, select **Streamable HTTP** as the transport, and add the header `Authorization: Bearer mi_your_api_key_here`.\n");
 
+  // Media Upload
+  lines.push("## Media Upload\n");
+  lines.push("Upload media files (images, videos, audio, documents) to get a public URL for use in log metadata.\n");
+  lines.push("### Endpoint\n");
+  lines.push("```");
+  lines.push(`POST ${spec.servers[1].url}`);
+  lines.push("```\n");
+  lines.push("**Auth:** Same `X-API-Key` header as the REST API.\n");
+  lines.push("**Max size:** 20MB\n");
+  lines.push("**Supports:**");
+  lines.push("- `multipart/form-data` with a `file` field");
+  lines.push("- Raw binary body with MIME type as `Content-Type`\n");
+  lines.push("**Response:**");
+  lines.push("```json");
+  lines.push(JSON.stringify({ media_url: "https://...public-url...", storage_path: "inbox/images/1234-abcd.jpg", mime_type: "image/jpeg", size: 102400 }, null, 2));
+  lines.push("```\n");
+  lines.push("### Example: Upload an image\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[1].url}" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -H "Content-Type: image/jpeg" \\`);
+  lines.push(`  --data-binary @photo.jpg`);
+  lines.push("```\n");
+  lines.push("### Example: Upload via form data\n");
+  lines.push("```bash");
+  lines.push(`curl -X POST "${spec.servers[1].url}" \\`);
+  lines.push(`  -H "X-API-Key: mi_your_api_key_here" \\`);
+  lines.push(`  -F "file=@photo.jpg"`);
+  lines.push("```\n");
+
   // Quick examples per platform
   lines.push("## Quick Examples\n");
 

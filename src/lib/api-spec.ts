@@ -11,6 +11,10 @@ export const apiSpec = {
       url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/functions/v1/api-proxy",
       description: "Messages Ingester API Proxy",
     },
+    {
+      url: "https://zqyzwgkzgxwfywizwnkw.supabase.co/functions/v1/media-upload",
+      description: "Media Upload Endpoint",
+    },
   ],
   security: [{ ApiKeyAuth: [] }],
   components: {
@@ -88,6 +92,15 @@ export const apiSpec = {
           notify: { type: "string", nullable: true, description: "Push/notify/display name set by the contact" },
           verified_name: { type: "string", nullable: true, description: "Business verified name, if any" },
           profile_pic_url: { type: "string", nullable: true, description: "URL to the contact's profile picture" },
+        },
+      },
+      MediaUploadResponse: {
+        type: "object",
+        properties: {
+          media_url: { type: "string", description: "Public URL of the uploaded file" },
+          storage_path: { type: "string", description: "Path within the whatsapp-media bucket" },
+          mime_type: { type: "string", description: "Detected MIME type" },
+          size: { type: "number", description: "File size in bytes" },
         },
       },
     },
@@ -200,6 +213,46 @@ export const apiSpec = {
         responses: {
           "201": { description: "Created / Updated" },
           "401": { description: "Unauthorized" },
+        },
+      },
+    },
+    "/media-upload": {
+      post: {
+        summary: "Upload media file",
+        description:
+          "Upload an image, video, audio, or document to Supabase Storage. Returns a public URL to include as `media_url` in log metadata. Supports multipart/form-data (field name `file`) or raw binary body with the MIME type as Content-Type. Max size: 20MB.",
+        operationId: "uploadMedia",
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  file: { type: "string", format: "binary", description: "The media file to upload" },
+                },
+              },
+            },
+            "*/*": {
+              schema: {
+                type: "string",
+                format: "binary",
+                description: "Raw binary file. Set Content-Type to the file's MIME type (e.g. image/jpeg, video/mp4).",
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Upload successful",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MediaUploadResponse" },
+              },
+            },
+          },
+          "401": { description: "Unauthorized — invalid or missing API key" },
+          "413": { description: "File too large (max 20MB)" },
         },
       },
     },

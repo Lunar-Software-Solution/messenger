@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Download, ChevronRight } from "lucide-react";
+import { Download, ChevronRight, Upload } from "lucide-react";
 
 interface ApiDocsPanelProps {
   open: boolean;
@@ -22,6 +22,7 @@ const methodColors: Record<string, string> = {
 };
 
 const mcpUrl = apiSpec.servers[0].url.replace("/api-proxy", "/mcp-server");
+const mediaUploadUrl = apiSpec.servers[1]?.url || apiSpec.servers[0].url.replace("/api-proxy", "/media-upload");
 
 const mcpTools = [
   { name: "query_logs", desc: "Search/filter message logs by source, level, date range, contact" },
@@ -186,6 +187,69 @@ export function ApiDocsPanel({ open, onClose }: ApiDocsPanelProps) {
                       <pre className="overflow-x-auto">npx @modelcontextprotocol/inspector</pre>
                       <pre className="overflow-x-auto">Authorization: Bearer mi_your_api_key_here</pre>
                     </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </div>
+
+            {/* Media Upload Section */}
+            <div className="border border-border rounded-lg p-3 mb-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-semibold text-foreground">Media Upload</h3>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload images, videos, audio, or documents to get a public URL for use as <code className="bg-secondary px-1 rounded">media_url</code> in log metadata.
+              </p>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Endpoint:</strong>{" "}
+                <code className="bg-secondary px-1 rounded">POST {mediaUploadUrl}</code>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Auth:</strong>{" "}
+                <code className="bg-secondary px-1 rounded">X-API-Key: mi_your_key</code>
+              </div>
+
+              <div className="text-xs text-muted-foreground">
+                <strong>Max size:</strong> 20MB &nbsp;|&nbsp; <strong>Accepts:</strong> multipart/form-data or raw binary
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-foreground mb-1">Response</p>
+                <pre className="bg-secondary p-2 rounded overflow-x-auto text-[11px] font-mono text-foreground">
+{JSON.stringify({ media_url: "https://...public-url...", storage_path: "inbox/images/1234-abcd.jpg", mime_type: "image/jpeg", size: 102400 }, null, 2)}
+                </pre>
+              </div>
+
+              <div className="space-y-1">
+                <Collapsible open={expandedPaths.has("media-raw")} onOpenChange={() => togglePath("media-raw")}>
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 p-2 rounded-md bg-secondary hover:bg-accent transition-colors cursor-pointer text-xs">
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expandedPaths.has("media-raw") ? "rotate-90" : ""}`} />
+                    Example: Raw binary upload
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <pre className="bg-secondary p-2 rounded overflow-x-auto text-[11px] font-mono text-foreground mt-1">
+{`curl -X POST "${mediaUploadUrl}" \\
+  -H "X-API-Key: mi_your_api_key_here" \\
+  -H "Content-Type: image/jpeg" \\
+  --data-binary @photo.jpg`}
+                    </pre>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Collapsible open={expandedPaths.has("media-form")} onOpenChange={() => togglePath("media-form")}>
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 p-2 rounded-md bg-secondary hover:bg-accent transition-colors cursor-pointer text-xs">
+                    <ChevronRight className={`h-3.5 w-3.5 transition-transform ${expandedPaths.has("media-form") ? "rotate-90" : ""}`} />
+                    Example: Form data upload
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <pre className="bg-secondary p-2 rounded overflow-x-auto text-[11px] font-mono text-foreground mt-1">
+{`curl -X POST "${mediaUploadUrl}" \\
+  -H "X-API-Key: mi_your_api_key_here" \\
+  -F "file=@photo.jpg"`}
+                    </pre>
                   </CollapsibleContent>
                 </Collapsible>
               </div>
