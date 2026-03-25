@@ -118,7 +118,7 @@ const LogStream = ({ logs }: LogStreamProps) => {
             return (
               <div
                 key={log.id}
-                className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors ${
+                className={`px-3 py-2 cursor-pointer hover:bg-secondary/50 transition-colors group ${
                   isMsgRow ? "border-l-4 border-primary bg-primary/5" : ""
                 }`}
                 onClick={() => setExpandedId(expanded ? null : log.id)}
