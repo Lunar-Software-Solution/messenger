@@ -41,20 +41,26 @@ function linkify(text: string) {
 
 const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }: ChatBubbleProps) => {
   const meta = (log.metadata || {}) as WhatsAppMessageMeta;
-  const fromMe = meta.from_me ?? false;
+  const rawMessage = log.message || "";
+  const parsedRaw = rawMessage.match(/^\[(.*?)\]\s*[←→]\s*([^:]+):\s*([\s\S]*)$/);
+  const rawType = parsedRaw?.[1]?.toLowerCase() || "";
+  const rawSender = parsedRaw?.[2]?.trim() || "";
+  const rawContent = parsedRaw?.[3] || rawMessage;
+  const fromMe = meta.from_me ?? rawMessage.includes("→");
   const isGroup = meta.remote_jid?.endsWith("@g.us") ?? false;
   const senderJid = meta.remote_jid || "";
   const contact = contacts.get(senderJid);
-  const senderName = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || senderJid.split("@")[0];
+  const senderName = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || rawSender || senderJid.split("@")[0];
   const profilePic = meta.profile_pic_url;
   const initials = (senderName || "?").slice(0, 2).toUpperCase();
+  const fallbackReactionMatch = rawContent.match(/^\[Reaction:\s*(.+?)\]$/i);
+  const fallbackReactions = fallbackReactionMatch ? [{ emoji: fallbackReactionMatch[1] }] : [];
 
   const formatTime = (ts: string) => {
     const d = new Date(ts);
     return d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   };
 
-  // Revoked message
   if (meta.is_revoked) {
     return (
       <div className={`flex ${fromMe ? "justify-end" : "justify-start"} px-3 py-0.5`}>
@@ -154,8 +160,9 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
   };
 
   const renderReactions = () => {
-    if (!meta.reactions?.length) return null;
-    const grouped = meta.reactions.reduce((acc, r) => {
+    const reactions = meta.reactions?.length ? meta.reactions : fallbackReactions;
+    if (!reactions.length) return null;
+    const grouped = reactions.reduce((acc, r) => {
       acc[r.emoji] = (acc[r.emoji] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -170,19 +177,24 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
     );
   };
 
-  let body = meta.body || meta.caption || (meta.type && meta.type !== "text" ? "" : log.message);
-  // Strip bracket prefixes like {text}» and redundant "Name: " prefix
+  let body = meta.body || meta.caption || (meta.type && meta.type !== "text" ? "" : rawContent);
   if (body) {
-    body = body.replace(/^\{[^}]*\}\s*»?\s*/, "");
-    // Remove redundant sender name prefix (e.g. "Carson: ")
-    if (senderName && body.startsWith(senderName + ": ")) {
+    body = body
+      .replace(/^\[[^\]]+\]\s*[←→]\s*[^:]+:\s*/, "")
+      .replace(/^\{[^}]*\}\s*»?\s*/, "")
+      .replace(/^\[[^\]]+\]\s*/, "")
+      .trim();
+
+    if (senderName && body.startsWith(`${senderName}: `)) {
       body = body.slice(senderName.length + 2);
+    }
+    if (fallbackReactionMatch || rawType === "reaction") {
+      body = body.replace(/^\[Reaction:\s*(.+?)\]$/i, "$1").trim();
     }
   }
 
   return (
     <div className={`flex ${fromMe ? "justify-end" : "justify-start"} px-3 py-0.5 group`}>
-      {/* Avatar for incoming — always show */}
       {!fromMe && (
         <div className="mr-2 mt-auto mb-1 shrink-0 cursor-pointer" onClick={() => onContactClick(senderJid, profilePic, senderName)}>
           <Avatar className="h-7 w-7 hover:ring-2 hover:ring-primary/50 transition-all">
@@ -197,14 +209,12 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
           ? "bg-primary/20 rounded-br-none"
           : "bg-secondary rounded-bl-none"
       }`}>
-        {/* Forwarded */}
         {meta.is_forwarded && (
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground italic mb-0.5">
             <Forward className="h-3 w-3" /> Forwarded
           </div>
         )}
 
-        {/* Sender name for groups */}
         {!fromMe && showSender && isGroup && (
           <p className={`text-[11px] font-semibold mb-0.5 cursor-pointer hover:underline ${getSenderColor(senderJid)}`}
             onClick={() => onContactClick(senderJid, profilePic, senderName)}>{senderName}</p>
@@ -214,13 +224,8 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
             onClick={() => onContactClick(senderJid, profilePic, senderName)}>{senderName}</p>
         )}
 
-        {/* Quoted */}
         {renderQuoted()}
-
-        {/* Media */}
         {renderMedia()}
-
-        {/* Body text */}
         {body && <p className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{linkify(body)}</p>}
 
         {/* Caption (if media + separate caption) */}
