@@ -26,8 +26,8 @@ const ConnectionBar = ({ session }: ConnectionBarProps) => {
           {isConnected ? 'Connected' : 'Disconnected'}
         </span>
       </div>
-      <span className="ml-auto text-xs text-muted-foreground font-mono">
-        {user?.email}
+      <span className="text-xs text-muted-foreground font-mono mr-2">
+        Messages Ingester — {user?.email}
       </span>
       <Button variant="ghost" size="icon" onClick={signOut} className="h-8 w-8 text-muted-foreground hover:text-foreground">
         <LogOut className="h-4 w-4" />

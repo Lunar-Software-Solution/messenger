@@ -58,7 +58,7 @@ const Auth = () => {
           <CardDescription className="text-muted-foreground">
             {resetMode
               ? "Enter your email to receive a reset link"
-              : "WhatsApp Monitor Dashboard"}
+              : "Messages Ingester"}
           </CardDescription>
         </CardHeader>
         <CardContent>
