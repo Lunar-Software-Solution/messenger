@@ -170,12 +170,20 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
     );
   };
 
-  const body = meta.body || meta.caption || (meta.type && meta.type !== "text" ? "" : log.message);
+  let body = meta.body || meta.caption || (meta.type && meta.type !== "text" ? "" : log.message);
+  // Strip bracket prefixes like {text}» and redundant "Name: " prefix
+  if (body) {
+    body = body.replace(/^\{[^}]*\}\s*»?\s*/, "");
+    // Remove redundant sender name prefix (e.g. "Carson: ")
+    if (senderName && body.startsWith(senderName + ": ")) {
+      body = body.slice(senderName.length + 2);
+    }
+  }
 
   return (
     <div className={`flex ${fromMe ? "justify-end" : "justify-start"} px-3 py-0.5 group`}>
-      {/* Avatar for incoming */}
-      {!fromMe && showSender && (
+      {/* Avatar for incoming — always show */}
+      {!fromMe && (
         <div className="mr-2 mt-auto mb-1 shrink-0 cursor-pointer" onClick={() => onContactClick(senderJid, profilePic, senderName)}>
           <Avatar className="h-7 w-7 hover:ring-2 hover:ring-primary/50 transition-all">
             {profilePic ? <AvatarImage src={profilePic} /> : null}
@@ -183,7 +191,6 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
           </Avatar>
         </div>
       )}
-      {!fromMe && !showSender && <div className="w-9 shrink-0" />}
 
       <div className={`max-w-[75%] rounded-lg px-2.5 py-1.5 shadow-sm ${
         fromMe
