@@ -47,6 +47,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        platform: {
+          whatsapp: "hsl(var(--platform-whatsapp))",
+          signal: "hsl(var(--platform-signal))",
+          wechat: "hsl(var(--platform-wechat))",
+          telegram: "hsl(var(--platform-telegram))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
