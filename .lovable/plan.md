@@ -1,44 +1,73 @@
 
 
-## Plan: Add Conversation List to Chat View
+## Plan: Multi-Platform Support via Sidebar Selector
 
-Currently all messages from all contacts are mixed together in one stream. The fix is to add a **conversation list sidebar** on the left of the chat area, like WhatsApp's main screen — you pick a conversation, then only that conversation's messages show.
+### Concept
 
-### Layout Change
+Add platform entries (WhatsApp, Signal, WeChat, Telegram) to the existing `AppSidebar`. Clicking one loads that platform's dashboard in the main area. The current WhatsApp UI becomes one "instance" of a generic messaging layout.
 
-The current 65% chat area splits into a conversation list (30%) + active chat (70%):
+### Layout
 
 ```text
-┌──────────────────────────────────────────────────┐
-│  Connection Bar               [Messages] [Logs]  │
-├────────┬─────────────────────┬───────────────────┤
-│ Convos │  Chat (filtered)    │  SendPanel        │
-│        │                     │                   │
-│ Alice  │  Alice: Hey!        │                   │
-│ Group1 │  You: Hi there      │                   │
-│ Bob    │  Alice: [image]     │                   │
-│        │                     │                   │
-└────────┴─────────────────────┴───────────────────┘
+┌─────┬──────────────────────────────────────────┐
+│ WA  │  ConnectionBar (platform-aware)          │
+│ SIG ├────────┬──────────────────┬───────────────┤
+│ WC  │ Convos │  Chat            │  SendPanel    │
+│ TG  │        │                  │               │
+│─────│        │                  │               │
+│ Keys│        │                  │               │
+│ Docs│        │                  │               │
+└─────┴────────┴──────────────────┴───────────────┘
 ```
 
-### New File
+### Changes
 
-1. **`src/components/whatsapp/ConversationList.tsx`** — Left sidebar listing unique conversations derived from message logs:
-   - Groups messages by `remote_jid`
-   - Shows avatar, contact name (from contacts map or push_name), last message preview, timestamp, and unread-style count
-   - Sorted by most recent message
-   - Clicking selects the conversation; active conversation is highlighted
-   - An "All" option at top to show all messages (current behavior)
+#### 1. New type: `MessagingPlatform`
 
-### Modified Files
+**File**: `src/types/whatsapp.ts` (rename consideration below)
 
-1. **`src/components/whatsapp/ChatView.tsx`** — Add `selectedJid` state. Render `ConversationList` on the left and filter messages to the selected JID. Pass contacts map to both components.
+Add a union type:
+```ts
+export type MessagingPlatform = 'whatsapp' | 'signal' | 'wechat' | 'telegram';
+```
 
-2. **`src/pages/Index.tsx`** — Give the chat panel more width (bump from 65% to 70%) since the conversation list needs space inside it.
+#### 2. Update `AppSidebar`
 
-### Key Details
-- Conversations extracted from messages via `useMemo` — no new DB queries needed
-- Group chats (`@g.us`) show group name if available, individual chats show contact name
-- "All Messages" option preserves the current mixed view as a fallback
-- Selected conversation pre-fills the `to_jid` in SendPanel (optional enhancement)
+**File**: `src/components/settings/AppSidebar.tsx`
+
+- Add a "Platforms" group above "Settings" with four entries, each with a platform icon (use lucide `MessageSquare` variants or simple SVG/emoji placeholders for now)
+- New prop: `activePlatform` + `onSelectPlatform`
+- Highlight the active platform entry
+- WhatsApp selected by default
+
+#### 3. Update `Index.tsx` — platform state
+
+**File**: `src/pages/Index.tsx`
+
+- Add `activePlatform` state (default: `'whatsapp'`)
+- Pass it to `AppSidebar` and `ConnectionBar`
+- For now, only WhatsApp has real data hooks. Signal/WeChat/Telegram show a placeholder: "Signal integration coming soon"
+- The existing WhatsApp data fetching stays as-is, only rendered when `activePlatform === 'whatsapp'`
+
+#### 4. Update `ConnectionBar`
+
+**File**: `src/components/whatsapp/ConnectionBar.tsx`
+
+- Accept `platform` prop
+- Show platform name + icon in the bar (e.g., "WhatsApp — Connected" or "Signal — Not configured")
+
+### What this does NOT do yet
+
+- No new DB tables for Signal/WeChat/Telegram (those come when each integration is built)
+- No new edge functions
+- No refactoring of component folder names (keep `whatsapp/` for now, refactor later when a second platform gets real data)
+
+### Summary of files
+
+| File | Action |
+|------|--------|
+| `src/types/whatsapp.ts` | Add `MessagingPlatform` type |
+| `src/components/settings/AppSidebar.tsx` | Add platform selector group |
+| `src/pages/Index.tsx` | Add `activePlatform` state, conditional rendering |
+| `src/components/whatsapp/ConnectionBar.tsx` | Accept and display platform prop |
 
