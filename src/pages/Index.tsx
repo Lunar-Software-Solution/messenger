@@ -136,7 +136,7 @@ const Index = () => {
                     <ChatView logs={logs} contacts={contactsMap} />
                   </div>
                   <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
                   </div>
                 </>
               ) : (
@@ -145,7 +145,7 @@ const Index = () => {
                     <LogStream logs={logs} />
                   </div>
                   <div className="w-[30%] flex flex-col min-h-0">
-                    <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                    <SendPanel recentSent={recentSent} contacts={contactsMap} platform={activePlatform} />
                   </div>
                 </>
               )
