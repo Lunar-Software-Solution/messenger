@@ -79,4 +79,5 @@ export interface WhatsAppMessageMeta {
   latitude?: number;
   longitude?: number;
   vcard?: string;
+  group_subject?: string;
 }
