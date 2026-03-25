@@ -126,6 +126,11 @@ Deno.serve(async (req) => {
         if (m.profile_pic_url) existing.profile_pic_url = m.profile_pic_url;
         if (m.push_name) existing.notify = m.push_name;
 
+        // Store group subject as contact name for group JIDs
+        if (jid.endsWith("@g.us") && m.group_subject) {
+          existing.name = m.group_subject;
+        }
+
         contactUpserts.set(jid, existing);
       }
 
