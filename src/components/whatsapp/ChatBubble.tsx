@@ -189,7 +189,7 @@ const ChatBubble = ({ log, contacts, showSender, aggregatedReactions = [], onMed
       <div className="flex gap-1 mt-1">
         {Object.entries(grouped).map(([emoji, count]) => (
           <span key={emoji} className="px-1.5 py-0.5 rounded-full bg-background/60 text-[11px] border border-border">
-            {emoji} {count > 1 && count}
+            {emoji} {(count as number) > 1 && (count as number)}
           </span>
         ))}
       </div>
