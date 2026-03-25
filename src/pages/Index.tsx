@@ -1,16 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { WhatsAppSession, WhatsAppLog, WhatsAppOutbox, WhatsAppContact } from "@/types/whatsapp";
 import ConnectionBar from "@/components/whatsapp/ConnectionBar";
 import QROverlay from "@/components/whatsapp/QROverlay";
 import LogStream from "@/components/whatsapp/LogStream";
 import SendPanel from "@/components/whatsapp/SendPanel";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/settings/AppSidebar";
+import { ApiKeysPanel } from "@/components/settings/ApiKeysPanel";
+import { ApiDocsPanel } from "@/components/settings/ApiDocsPanel";
 
 const Index = () => {
   const [session, setSession] = useState<WhatsAppSession | null>(null);
   const [logs, setLogs] = useState<WhatsAppLog[]>([]);
   const [recentSent, setRecentSent] = useState<WhatsAppOutbox[]>([]);
   const [contactsMap, setContactsMap] = useState<Map<string, WhatsAppContact>>(new Map());
+  const [activePanel, setActivePanel] = useState<"api-keys" | "api-docs" | null>(null);
 
   const db = supabase as any;
 
@@ -69,28 +74,43 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-screen bg-background overflow-hidden">
-      {/* QR Overlay */}
-      {session?.status === "qr_pending" && session.qr_data && (
-        <QROverlay qrData={session.qr_data} />
-      )}
+    <SidebarProvider defaultOpen={false}>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar onOpenPanel={setActivePanel} />
 
-      {/* Top bar */}
-      <ConnectionBar session={session} />
+        <div className="flex-1 flex flex-col h-screen overflow-hidden">
+          {/* QR Overlay */}
+          {session?.status === "qr_pending" && session.qr_data && (
+            <QROverlay qrData={session.qr_data} />
+          )}
 
-      {/* Main content */}
-      <div className="flex flex-1 min-h-0">
-        {/* Log stream — 65% */}
-        <div className="w-[65%] border-r border-border flex flex-col min-h-0">
-          <LogStream logs={logs} />
-        </div>
+          {/* Top bar */}
+          <div className="flex items-center border-b border-border">
+            <SidebarTrigger className="ml-2" />
+            <div className="flex-1">
+              <ConnectionBar session={session} />
+            </div>
+          </div>
 
-        {/* Send panel — 35% */}
-        <div className="w-[35%] flex flex-col min-h-0">
-          <SendPanel recentSent={recentSent} contacts={contactsMap} />
+          {/* Main content */}
+          <div className="flex flex-1 min-h-0">
+            {/* Log stream — 65% */}
+            <div className="w-[65%] border-r border-border flex flex-col min-h-0">
+              <LogStream logs={logs} />
+            </div>
+
+            {/* Send panel — 35% */}
+            <div className="w-[35%] flex flex-col min-h-0">
+              <SendPanel recentSent={recentSent} contacts={contactsMap} />
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Settings panels */}
+      <ApiKeysPanel open={activePanel === "api-keys"} onClose={() => setActivePanel(null)} />
+      <ApiDocsPanel open={activePanel === "api-docs"} onClose={() => setActivePanel(null)} />
+    </SidebarProvider>
   );
 };
 
