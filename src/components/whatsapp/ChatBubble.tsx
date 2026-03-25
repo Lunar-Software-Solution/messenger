@@ -51,8 +51,21 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
   const senderJid = meta.remote_jid || "";
   const participantKey = isGroup ? (meta.push_name || rawSender || senderJid) : senderJid;
   const contact = contacts.get(senderJid);
+
+  // In groups, try to find the individual participant's contact by name
+  const participantContact = isGroup && !fromMe
+    ? (() => {
+        const name = meta.push_name || rawSender;
+        if (!name) return null;
+        for (const [, c] of contacts) {
+          if (c.notify === name || c.name === name || c.verified_name === name) return c;
+        }
+        return null;
+      })()
+    : null;
+
   const senderName = meta.push_name || contact?.notify || contact?.name || contact?.verified_name || rawSender || senderJid.split("@")[0];
-  const profilePic = meta.profile_pic_url || contact?.profile_pic_url;
+  const profilePic = meta.profile_pic_url || participantContact?.profile_pic_url || contact?.profile_pic_url;
   const initials = (senderName || "?").slice(0, 2).toUpperCase();
   const fallbackReactionMatch = rawContent.match(/^\[Reaction:\s*(.+?)\]$/i);
   const fallbackReactions = fallbackReactionMatch ? [{ emoji: fallbackReactionMatch[1] }] : [];
