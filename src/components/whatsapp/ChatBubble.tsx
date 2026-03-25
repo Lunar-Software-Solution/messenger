@@ -200,7 +200,9 @@ const ChatBubble = ({ log, contacts, showSender, onMediaClick, onContactClick }:
         <div className="mr-2 mt-auto mb-1 shrink-0 cursor-pointer" onClick={() => onContactClick(senderJid, profilePic, senderName)}>
           <Avatar className="h-7 w-7 hover:ring-2 hover:ring-primary/50 transition-all">
             {profilePic ? <AvatarImage src={profilePic} /> : null}
-            <AvatarFallback className="text-[10px] bg-secondary">{initials}</AvatarFallback>
+            <AvatarFallback className={`text-[10px] ${isGroup ? getSenderColor(participantKey).replace('text-', 'bg-').replace('400', '400/20') : 'bg-secondary'}`}>
+              <span className={isGroup ? getSenderColor(participantKey) : ''}>{initials}</span>
+            </AvatarFallback>
           </Avatar>
         </div>
       )}
