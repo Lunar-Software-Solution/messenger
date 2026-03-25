@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { WhatsAppLog, WhatsAppMessageMeta, WhatsAppContact } from "@/types/whatsapp";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface ConversationListProps {
   logs: WhatsAppLog[];
@@ -19,6 +20,7 @@ interface ConversationSummary {
   lastTimestamp: string;
   messageCount: number;
   isGroup: boolean;
+  participants: Set<string>;
 }
 
 const ConversationList = ({ logs, contacts, selectedJid, onSelect }: ConversationListProps) => {
@@ -51,7 +53,11 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
 
       const fullPreview = meta.from_me ? `You: ${preview}` : preview;
 
+      const participantName = meta.push_name || "";
+
       if (!existing || msg.created_at > existing.lastTimestamp) {
+        const participants = existing?.participants || new Set<string>();
+        if (participantName) participants.add(participantName);
         map.set(jid, {
           jid,
           name: existing?.name || name,
@@ -60,9 +66,11 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
           lastTimestamp: msg.created_at,
           messageCount: (existing?.messageCount || 0) + 1,
           isGroup,
+          participants,
         });
       } else {
         existing.messageCount += 1;
+        if (participantName) existing.participants.add(participantName);
         if (meta.profile_pic_url && !existing.profilePic) {
           existing.profilePic = meta.profile_pic_url;
         }
@@ -117,14 +125,24 @@ const ConversationList = ({ logs, contacts, selectedJid, onSelect }: Conversatio
               }`}
               onClick={() => onSelect(conv.jid)}
             >
-              <Avatar className="h-8 w-8 shrink-0">
-                {conv.profilePic ? <AvatarImage src={conv.profilePic} /> : null}
-                <AvatarFallback className="text-[10px] bg-secondary">{initials}</AvatarFallback>
-              </Avatar>
+              <div className="relative shrink-0">
+                <Avatar className="h-8 w-8">
+                  {conv.profilePic ? <AvatarImage src={conv.profilePic} /> : null}
+                  <AvatarFallback className="text-[10px] bg-secondary">
+                    {conv.isGroup ? <Users className="h-3.5 w-3.5 text-muted-foreground" /> : initials}
+                  </AvatarFallback>
+                </Avatar>
+                {conv.isGroup && conv.participants.size > 0 && (
+                  <span className="absolute -bottom-0.5 -right-0.5 bg-primary text-primary-foreground text-[8px] font-bold rounded-full h-3.5 min-w-[14px] flex items-center justify-center px-0.5">
+                    {conv.participants.size}
+                  </span>
+                )}
+              </div>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold truncate">{conv.name}</p>
-                  <span className="text-[10px] text-muted-foreground shrink-0 ml-1">{formatTime(conv.lastTimestamp)}</span>
+                <div className="flex items-center justify-between gap-1">
+                  {conv.isGroup && <Users className="h-3 w-3 text-primary shrink-0" />}
+                  <p className="text-xs font-semibold truncate flex-1">{conv.name}</p>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{formatTime(conv.lastTimestamp)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-[11px] text-muted-foreground truncate">{conv.lastMessage}</p>
