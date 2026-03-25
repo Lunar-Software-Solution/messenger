@@ -158,15 +158,15 @@ export const apiSpec = {
     "/message_session": {
       patch: {
         summary: "Update session status",
-        description: "Update the session row with new status or QR data. Currently used by WhatsApp (Baileys). Other platforms may use this for connection state tracking.",
+        description: "Update the session row for a specific platform with new status or QR data. Each platform has its own session row.",
         operationId: "updateSession",
         parameters: [
           {
-            name: "id",
+            name: "platform",
             in: "query",
             required: true,
-            description: "PostgREST filter, e.g. `eq.1` to target the single session row.",
-            schema: { type: "string", example: "eq.1" },
+            description: "PostgREST filter, e.g. `eq.whatsapp` to target the WhatsApp session row.",
+            schema: { type: "string", example: "eq.whatsapp" },
           },
         ],
         requestBody: {
