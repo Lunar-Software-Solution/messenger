@@ -6,6 +6,7 @@ import QROverlay from "@/components/whatsapp/QROverlay";
 import LogStream from "@/components/whatsapp/LogStream";
 import ChatView from "@/components/whatsapp/ChatView";
 import SendPanel from "@/components/whatsapp/SendPanel";
+import PlatformSetup from "@/components/whatsapp/PlatformSetup";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/settings/AppSidebar";
 import { ApiKeysPanel } from "@/components/settings/ApiKeysPanel";
@@ -141,12 +142,7 @@ const Index = () => {
                 </>
               )
             ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center space-y-2">
-                  <p className="text-lg font-medium">{PLATFORM_LABELS[activePlatform]}</p>
-                  <p className="text-sm">Integration coming soon</p>
-                </div>
-              </div>
+              <PlatformSetup platform={activePlatform} onOpenDocs={() => setActivePanel("api-docs")} />
             )}
           </div>
         </div>
