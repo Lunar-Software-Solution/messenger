@@ -28,7 +28,8 @@ const SendPanel = ({ recentSent, contacts }: SendPanelProps) => {
   useEffect(() => {
     if (to.length < 1) { setSuggestions([]); return; }
     const timeout = setTimeout(async () => {
-      const { data } = await supabase
+      const db = supabase as any;
+      const { data } = await db
         .from("whatsapp_contacts")
         .select("*")
         .or(`name.ilike.%${to}%,notify.ilike.%${to}%,id.ilike.%${to}%`)
@@ -79,7 +80,8 @@ const SendPanel = ({ recentSent, contacts }: SendPanelProps) => {
         mediaType = deriveMediaType(file.type);
       }
 
-      const { error: insertErr } = await supabase.from("whatsapp_outbox").insert({
+      const db = supabase as any;
+      const { error: insertErr } = await db.from("whatsapp_outbox").insert({
         to_jid: jid,
         content: content.trim() || null,
         media_url: mediaUrl,

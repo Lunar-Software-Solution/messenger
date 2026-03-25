@@ -12,69 +12,57 @@ const Index = () => {
   const [recentSent, setRecentSent] = useState<WhatsAppOutbox[]>([]);
   const [contactsMap, setContactsMap] = useState<Map<string, WhatsAppContact>>(new Map());
 
+  const db = supabase as any;
+
   // Fetch session
   useEffect(() => {
-    supabase
-      .from("whatsapp_session")
-      .select("*")
-      .eq("id", 1)
-      .single()
-      .then(({ data }) => { if (data) setSession(data as unknown as WhatsAppSession); });
+    db.from("whatsapp_session").select("*").eq("id", 1).single()
+      .then(({ data }: any) => { if (data) setSession(data as WhatsAppSession); });
 
     const channel = supabase
       .channel("session-changes")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "whatsapp_session" },
-        (payload) => setSession(payload.new as unknown as WhatsAppSession))
+        (payload: any) => setSession(payload.new as WhatsAppSession))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   // Fetch logs
   useEffect(() => {
-    supabase
-      .from("whatsapp_logs")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100)
-      .then(({ data }) => { if (data) setLogs((data as unknown as WhatsAppLog[]).reverse()); });
+    db.from("whatsapp_logs").select("*").order("created_at", { ascending: false }).limit(100)
+      .then(({ data }: any) => { if (data) setLogs((data as WhatsAppLog[]).reverse()); });
 
     const channel = supabase
       .channel("log-inserts")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_logs" },
-        (payload) => setLogs((prev) => [...prev, payload.new as unknown as WhatsAppLog]))
+        (payload: any) => setLogs((prev) => [...prev, payload.new as WhatsAppLog]))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   // Fetch outbox
   useEffect(() => {
-    supabase
-      .from("whatsapp_outbox")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(20)
-      .then(({ data }) => { if (data) setRecentSent(data as unknown as WhatsAppOutbox[]); });
+    db.from("whatsapp_outbox").select("*").order("created_at", { ascending: false }).limit(20)
+      .then(({ data }: any) => { if (data) setRecentSent(data as WhatsAppOutbox[]); });
 
     const channel = supabase
       .channel("outbox-changes")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "whatsapp_outbox" },
-        (payload) => setRecentSent((prev) => [payload.new as unknown as WhatsAppOutbox, ...prev].slice(0, 20)))
+        (payload: any) => setRecentSent((prev) => [payload.new as WhatsAppOutbox, ...prev].slice(0, 20)))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "whatsapp_outbox" },
-        (payload) => setRecentSent((prev) =>
-          prev.map((m) => (m.id === (payload.new as any).id ? payload.new as unknown as WhatsAppOutbox : m))))
+        (payload: any) => setRecentSent((prev) =>
+          prev.map((m) => (m.id === (payload.new as any).id ? payload.new as WhatsAppOutbox : m))))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Fetch contacts for name resolution
+  // Fetch contacts
   useEffect(() => {
-    supabase
-      .from("whatsapp_contacts")
-      .select("*")
-      .then(({ data }) => {
+    db.from("whatsapp_contacts").select("*")
+      .then(({ data }: any) => {
         if (data) {
           const map = new Map<string, WhatsAppContact>();
-          (data as unknown as WhatsAppContact[]).forEach((c) => map.set(c.id, c));
+          (data as WhatsAppContact[]).forEach((c) => map.set(c.id, c));
           setContactsMap(map);
         }
       });
