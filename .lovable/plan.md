@@ -1,31 +1,23 @@
 
 
-# Add API Key Authentication to MCP Server
+# Add MCP Server Section to API Docs UI Panel
 
-## Overview
-Add the same API key authentication used by `api-proxy` to the MCP server, validating `Authorization: Bearer <api_key>` headers against the `api_keys` table. Update the docs to reflect the auth requirement.
+## What
+The API Docs dialog (`ApiDocsPanel.tsx`) currently only shows the REST API endpoints. The MCP Server documentation exists only in the downloadable `.md` file. We need to add a visual MCP Server section inside the dialog so users can see it without downloading.
 
 ## Changes
 
-### 1. `supabase/functions/mcp-server/index.ts`
-- Add an auth middleware in the Hono app that runs before the MCP handler
-- Extract the `Authorization: Bearer <key>` header
-- SHA-256 hash the key and look it up in `api_keys` table (same logic as `api-proxy`)
-- Check the key starts with `mi_`, is not revoked
-- Update `last_used_at` (fire-and-forget)
-- Return 401 JSON response if auth fails
-- Pass through to MCP transport if valid
+### `src/components/settings/ApiDocsPanel.tsx`
+Add an "MCP Server" section below the existing Auth info and above the endpoints list. It will include:
 
-### 2. `src/lib/api-docs-markdown.ts`
-- Add an **Authentication** subsection under MCP Server explaining that requests require a valid API key via `Authorization: Bearer <your-api-key>`
-- Update the Claude Desktop config example to use `mcp-remote` with the `--header "Authorization: Bearer ${API_KEY}"` pattern (matching what the user shared earlier)
-- Update the Cursor/other clients example to include the auth header
-- Update the MCP Inspector example to mention passing the auth header
+1. **Section header** — "MCP Server (Model Context Protocol)" with a brief description
+2. **Endpoint** — displayed in a code block, derived from `apiSpec.servers[0].url` replacing `/api-proxy` with `/mcp-server`
+3. **Authentication** — shows `Authorization: Bearer mi_your_api_key_here`
+4. **Transport** — "Streamable HTTP"
+5. **Available Tools table** — 6 tools with descriptions, rendered as a simple grid/list
+6. **Connection configs** — Collapsible sections for Claude Desktop, Cursor, and MCP Inspector, each showing the JSON config in a `<pre>` code block (same content as the markdown generator)
 
-### 3. Deploy
-- Deploy the updated `mcp-server` edge function
+All content will use the same styling patterns already in the panel (text-xs, bg-secondary code blocks, Collapsible components, Badge elements). The MCP section will be wrapped in a bordered card to visually separate it from the REST endpoints below.
 
-## Technical Detail
-
-The auth check reuses the exact same pattern from `api-proxy`: hash with SHA-256, query `api_keys` table by `key_hash`, reject if missing or revoked. The only difference is the header format — `Authorization: Bearer <key>` instead of `X-API-Key: <key>` — to match standard MCP client conventions.
+No new files needed — just expanding the existing `ApiDocsPanel.tsx`.
 
