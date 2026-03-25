@@ -216,5 +216,45 @@ export const apiSpec = {
         },
       },
     },
+    "/media-upload": {
+      post: {
+        summary: "Upload media file",
+        description:
+          "Upload an image, video, audio, or document to Supabase Storage. Returns a public URL to include as `media_url` in log metadata. Supports multipart/form-data (field name `file`) or raw binary body with the MIME type as Content-Type. Max size: 20MB.",
+        operationId: "uploadMedia",
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  file: { type: "string", format: "binary", description: "The media file to upload" },
+                },
+              },
+            },
+            "*/*": {
+              schema: {
+                type: "string",
+                format: "binary",
+                description: "Raw binary file. Set Content-Type to the file's MIME type (e.g. image/jpeg, video/mp4).",
+              },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Upload successful",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/MediaUploadResponse" },
+              },
+            },
+          },
+          "401": { description: "Unauthorized — invalid or missing API key" },
+          "413": { description: "File too large (max 20MB)" },
+        },
+      },
+    },
   },
 };
