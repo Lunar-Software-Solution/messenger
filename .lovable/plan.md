@@ -1,73 +1,50 @@
 
 
-## Plan: Multi-Platform Support via Sidebar Selector
+## Plan: Add `profile_pic_url` to contacts and auto-populate from log ingestion
 
-### Concept
-
-Add platform entries (WhatsApp, Signal, WeChat, Telegram) to the existing `AppSidebar`. Clicking one loads that platform's dashboard in the main area. The current WhatsApp UI becomes one "instance" of a generic messaging layout.
-
-### Layout
-
-```text
-┌─────┬──────────────────────────────────────────┐
-│ WA  │  ConnectionBar (platform-aware)          │
-│ SIG ├────────┬──────────────────┬───────────────┤
-│ WC  │ Convos │  Chat            │  SendPanel    │
-│ TG  │        │                  │               │
-│─────│        │                  │               │
-│ Keys│        │                  │               │
-│ Docs│        │                  │               │
-└─────┴────────┴──────────────────┴───────────────┘
-```
+### Problem
+The `whatsapp_contacts` table has no `profile_pic_url` column, and log metadata `profile_pic_url` is never extracted to populate contacts. Avatars can't render.
 
 ### Changes
 
-#### 1. New type: `MessagingPlatform`
+#### 1. Database migration — add `profile_pic_url` column
+Add a nullable `text` column `profile_pic_url` to `whatsapp_contacts`.
 
-**File**: `src/types/whatsapp.ts` (rename consideration below)
-
-Add a union type:
-```ts
-export type MessagingPlatform = 'whatsapp' | 'signal' | 'wechat' | 'telegram';
+```sql
+ALTER TABLE public.whatsapp_contacts
+  ADD COLUMN IF NOT EXISTS profile_pic_url text;
 ```
 
-#### 2. Update `AppSidebar`
+#### 2. Update edge function `api-proxy/index.ts`
+After the API key validation and before forwarding to PostgREST, add a **side-effect hook** for `POST /whatsapp_logs`:
 
-**File**: `src/components/settings/AppSidebar.tsx`
+- Parse the request body (clone it since we still need to forward it)
+- For each log entry where `source === "baileys:message"` and `metadata.remote_jid` exists:
+  - If `metadata.profile_pic_url` is present, upsert into `whatsapp_contacts` setting the `profile_pic_url` (and `notify`/`name` from `push_name` if available)
+- This runs fire-and-forget alongside the normal PostgREST forward
 
-- Add a "Platforms" group above "Settings" with four entries, each with a platform icon (use lucide `MessageSquare` variants or simple SVG/emoji placeholders for now)
-- New prop: `activePlatform` + `onSelectPlatform`
-- Highlight the active platform entry
-- WhatsApp selected by default
+This means the Baileys worker only needs to include `profile_pic_url` in the log metadata — the proxy handles persisting it to contacts automatically.
 
-#### 3. Update `Index.tsx` — platform state
+#### 3. Update API spec (`src/lib/api-spec.ts`)
+- Add `profile_pic_url` to the `ContactUpsert` schema
+- Document `profile_pic_url` in the `LogEntry` metadata description
 
-**File**: `src/pages/Index.tsx`
+#### 4. Update TypeScript types
+- Add `profile_pic_url?: string` to `WhatsAppContact` in `src/types/whatsapp.ts`
+- Note: `src/integrations/supabase/types.ts` will auto-update after migration
 
-- Add `activePlatform` state (default: `'whatsapp'`)
-- Pass it to `AppSidebar` and `ConnectionBar`
-- For now, only WhatsApp has real data hooks. Signal/WeChat/Telegram show a placeholder: "Signal integration coming soon"
-- The existing WhatsApp data fetching stays as-is, only rendered when `activePlatform === 'whatsapp'`
+#### 5. Update frontend components to use the new field
+- `ConversationList.tsx`: Read `contact.profile_pic_url` as avatar source (in addition to existing `meta.profile_pic_url` from logs)
+- `ChatBubble.tsx`: Same — prefer contact-level avatar when log-level is missing
 
-#### 4. Update `ConnectionBar`
+### Files affected
 
-**File**: `src/components/whatsapp/ConnectionBar.tsx`
-
-- Accept `platform` prop
-- Show platform name + icon in the bar (e.g., "WhatsApp — Connected" or "Signal — Not configured")
-
-### What this does NOT do yet
-
-- No new DB tables for Signal/WeChat/Telegram (those come when each integration is built)
-- No new edge functions
-- No refactoring of component folder names (keep `whatsapp/` for now, refactor later when a second platform gets real data)
-
-### Summary of files
-
-| File | Action |
+| File | Change |
 |------|--------|
-| `src/types/whatsapp.ts` | Add `MessagingPlatform` type |
-| `src/components/settings/AppSidebar.tsx` | Add platform selector group |
-| `src/pages/Index.tsx` | Add `activePlatform` state, conditional rendering |
-| `src/components/whatsapp/ConnectionBar.tsx` | Accept and display platform prop |
+| Migration SQL | Add `profile_pic_url` column |
+| `supabase/functions/api-proxy/index.ts` | Add contact upsert side-effect on log insert |
+| `src/lib/api-spec.ts` | Add `profile_pic_url` to ContactUpsert schema |
+| `src/types/whatsapp.ts` | Add `profile_pic_url` to `WhatsAppContact` |
+| `src/components/whatsapp/ConversationList.tsx` | Use `contact.profile_pic_url` for avatar |
+| `src/components/whatsapp/ChatBubble.tsx` | Use contact avatar as fallback |
 
