@@ -4,11 +4,14 @@ import { WhatsAppSession, WhatsAppLog, WhatsAppOutbox, WhatsAppContact } from "@
 import ConnectionBar from "@/components/whatsapp/ConnectionBar";
 import QROverlay from "@/components/whatsapp/QROverlay";
 import LogStream from "@/components/whatsapp/LogStream";
+import ChatView from "@/components/whatsapp/ChatView";
 import SendPanel from "@/components/whatsapp/SendPanel";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/settings/AppSidebar";
 import { ApiKeysPanel } from "@/components/settings/ApiKeysPanel";
 import { ApiDocsPanel } from "@/components/settings/ApiDocsPanel";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquare, Terminal } from "lucide-react";
 
 const Index = () => {
   const [session, setSession] = useState<WhatsAppSession | null>(null);
@@ -16,6 +19,7 @@ const Index = () => {
   const [recentSent, setRecentSent] = useState<WhatsAppOutbox[]>([]);
   const [contactsMap, setContactsMap] = useState<Map<string, WhatsAppContact>>(new Map());
   const [activePanel, setActivePanel] = useState<"api-keys" | "api-docs" | null>(null);
+  const [activeView, setActiveView] = useState<"chat" | "logs">("chat");
 
   const db = supabase as any;
 
@@ -90,19 +94,44 @@ const Index = () => {
             <div className="flex-1">
               <ConnectionBar session={session} />
             </div>
+            {/* View toggle */}
+            <Tabs value={activeView} onValueChange={(v) => setActiveView(v as "chat" | "logs")} className="mr-3">
+              <TabsList className="h-8 bg-secondary">
+                <TabsTrigger value="chat" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Messages
+                </TabsTrigger>
+                <TabsTrigger value="logs" className="text-xs px-3 h-6 gap-1.5 data-[state=active]:bg-primary/20">
+                  <Terminal className="h-3.5 w-3.5" />
+                  Logs
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Main content */}
           <div className="flex flex-1 min-h-0">
-            {/* Log stream — 65% */}
-            <div className="w-[65%] border-r border-border flex flex-col min-h-0">
-              <LogStream logs={logs} contacts={contactsMap} />
-            </div>
-
-            {/* Send panel — 35% */}
-            <div className="w-[35%] flex flex-col min-h-0">
-              <SendPanel recentSent={recentSent} contacts={contactsMap} />
-            </div>
+            {activeView === "chat" ? (
+              /* Chat view — full width with send panel */
+              <>
+                <div className="w-[65%] border-r border-border flex flex-col min-h-0">
+                  <ChatView logs={logs} contacts={contactsMap} />
+                </div>
+                <div className="w-[35%] flex flex-col min-h-0">
+                  <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                </div>
+              </>
+            ) : (
+              /* Logs view — full width with send panel */
+              <>
+                <div className="w-[65%] border-r border-border flex flex-col min-h-0">
+                  <LogStream logs={logs} />
+                </div>
+                <div className="w-[35%] flex flex-col min-h-0">
+                  <SendPanel recentSent={recentSent} contacts={contactsMap} />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
