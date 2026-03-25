@@ -106,10 +106,6 @@ const Contacts = () => {
     return list;
   }, [contacts, filterPlatform, filterSync, search, sortBy]);
 
-  const displayName = (c: Contact) =>
-    c.name || c.notify || c.verified_name || c.id.split("@")[0];
-
-  const isGroup = (c: Contact) => c.id.endsWith("@g.us");
 
   const toggleSelect = (id: string) => {
     setSelected((prev) => {
