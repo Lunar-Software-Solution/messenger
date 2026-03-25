@@ -22,6 +22,7 @@ const methodColors: Record<string, string> = {
 };
 
 const mcpUrl = apiSpec.servers[0].url.replace("/api-proxy", "/mcp-server");
+const mediaUploadUrl = apiSpec.servers[1]?.url || apiSpec.servers[0].url.replace("/api-proxy", "/media-upload");
 
 const mcpTools = [
   { name: "query_logs", desc: "Search/filter message logs by source, level, date range, contact" },
