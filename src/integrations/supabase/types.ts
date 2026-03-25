@@ -14,7 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      whatsapp_contacts: {
+        Row: {
+          id: string
+          name: string | null
+          notify: string | null
+          updated_at: string
+          verified_name: string | null
+        }
+        Insert: {
+          id: string
+          name?: string | null
+          notify?: string | null
+          updated_at?: string
+          verified_name?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string | null
+          notify?: string | null
+          updated_at?: string
+          verified_name?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_logs: {
+        Row: {
+          created_at: string
+          id: number
+          level: string
+          message: string
+          metadata: Json | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          level?: string
+          message?: string
+          metadata?: Json | null
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          level?: string
+          message?: string
+          metadata?: Json | null
+          source?: string
+        }
+        Relationships: []
+      }
+      whatsapp_outbox: {
+        Row: {
+          content: string | null
+          created_at: string
+          error: string | null
+          id: number
+          media_type: string | null
+          media_url: string | null
+          status: string
+          to_jid: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          id?: never
+          media_type?: string | null
+          media_url?: string | null
+          status?: string
+          to_jid: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          error?: string | null
+          id?: never
+          media_type?: string | null
+          media_url?: string | null
+          status?: string
+          to_jid?: string
+        }
+        Relationships: []
+      }
+      whatsapp_session: {
+        Row: {
+          id: number
+          qr_data: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          qr_data?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          qr_data?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
